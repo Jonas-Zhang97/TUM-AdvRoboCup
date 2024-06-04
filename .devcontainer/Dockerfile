@@ -134,9 +134,14 @@ FROM runtime as dependencies
 # setup denpendencies for Contact GraspNet
 RUN sudo apt-get update && sudo apt-get install -y \
   build-essential \
+  bzip2\
+  ca-certificates \
   clang \
+  curl \
+  libblas-dev \
   libbz2-dev \
   libdbus-1-dev \
+  libdbus-glib-1-dev \
   libexpat1-dev \
   libfontconfig1-dev \
   libfreetype6-dev \
@@ -145,7 +150,12 @@ RUN sudo apt-get update && sudo apt-get install -y \
   libgstreamer1.0-dev \
   libhdf4-alt-dev \
   libhdf5-dev \
+  libicu-dev \
+  libomp-dev \
   libjpeg-dev \
+  libjsoncpp-dev \
+  libclang-10-dev \
+  libcurl4-openssl-dev \
   libkrb5-dev \
   liblcms2-dev \
   libnetcdf-dev \
@@ -166,14 +176,42 @@ RUN sudo apt-get update && sudo apt-get install -y \
   tk-dev \
   uuid-dev \
   zlib1g-dev \
+  cudnn9-cuda-12 \
   && sudo rm -rf /var/lib/apt/lists/*
 
 RUN pip install \
+  pillow==8.0.1 \
+  pyface==7.1.0 \
+  pygments==2.7.2 \
+  pyparsing==2.4.7 \
+  PyQt5==5.9.2 \
+  pyside2==5.11.0 \
+  python-dateutil==2.8.1 \
+  setuptools==50.3.1 \
+  sip==5.0.0 \
+  six==1.15.0 \
+  tornado==6.0.4 \
+  traits==6.1.1 \
+  traitsui==7.1.0 \
+  trimesh==3.8.12 \
+  wheel==0.35.1 \
+  h5py==2.10.0\
+  future==0.18.2 \
+  envisage==4.9.2 \
   absl-py==0.11.0 \
   astor==0.8.1 \
   astunparse==1.6.3 \
+  apptools==4.5.0 \
   cachetools==4.1.1 \
+  certifi==2020.6.20 \
+  configobj==5.0.6 \
   chardet==3.0.4 \
+  cycler==0.10.0 \
+  kiwisolver==1.3.0 \
+  mkl==2021.1.1 \
+  mkl-service==2.4.0 \
+  mkl_fft==1.3.0 \
+  mkl_random==1.2.2 \
   decorator==4.4.2 \
   freetype-py==2.2.0 \
   gast==0.3.3 \
@@ -191,6 +229,8 @@ RUN pip install \
   matplotlib==3.3.2 \
   mayavi==4.7.1 \
   networkx==2.5 \
+  numpy==1.19.2 \
+  olefile==0.46 \
   oauthlib==3.1.0 \
   opencv-python==4.4.0.46 \
   opt-einsum==3.3.0 \
@@ -213,6 +253,7 @@ RUN pip install \
   tensorflow-estimator==2.2.0 \
   tensorflow-gpu==2.2.0 \
   termcolor==1.1.0 \
+  urllib3==1.25.11 \
   tqdm==4.51.0 \
   traits==6.1.1 \
   traitsui==7.1.0 \
