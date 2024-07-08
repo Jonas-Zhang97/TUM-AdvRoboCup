@@ -62,30 +62,4 @@ If the error persists, it could be the case that the container can't establish a
 
 To run the models in devcontainers, you have to download `remote development` extension in VSCode.
 
-## Contact GraspNet
-
-Contact GraspNet is developed by NVlabs (see original repo [here](https://github.com/NVlabs/contact_graspnet/tree/main)), which is a general grasp pose generator for parallel jaw gripper.
-
-Clone the forked and modified version of Contact GraspNet with:
-
-```bash
-git clone https://github.com/Jonas-Zhang97/contact_graspnet_hoi.git
-```
-
-### Configure the Contact GraspNet
-
-Open VSCode, reopen folder in devcontainer. All the dependencies are already installed in the container, so you don't need to create conda environment any more.
-
-If you cloned official version of Contact GraspNet, you will still have to download check points from the [official cloud drive](https://drive.google.com/drive/folders/1tBHKf60K8DLM5arm-Chyf7jxkzOr5zGl), and unzip them in `/contact_graspnet_hoi/checkpoints`. The modified version contains already check points.
-
-Try to inference with example data with:
-
-```bash
-python contact_graspnet/inference.py --np_path=test_data/*.npy
-```
-
-or alternatively with depth image with a single object:
-
-```bash
-python contact_graspnet/inference.py --np_path=depth_image_data/*.npy
-```
+## HSRB Configuration

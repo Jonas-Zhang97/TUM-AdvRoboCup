@@ -81,7 +81,7 @@ ENV ROS_PACKAGE_PATH=/opt/ros/noetic/share
 
 FROM ros as user
 
-ARG USERNAME=cgnet-developer
+ARG USERNAME=developer
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 
@@ -105,9 +105,6 @@ RUN sudo mkdir -p /home/$USERNAME/Downloads/openssl/ssl \
   && sudo rosdep init \
   && rosdep update
 
-RUN echo "source /opt/ros/noetic/setup.bash" >> /home/$USERNAME/.bashrc
-
-
 ##### Runtime Stage #####
 
 FROM user as runtime
@@ -124,148 +121,26 @@ RUN sudo mkdir -p /home/$USERNAME/Downloads/openssl/ssl \
   && sudo rosdep init \
   && rosdep update
 
-RUN echo "source /opt/ros/noetic/setup.bash" >> /home/$USERNAME/.bashrc
-
 
 ##### Dependencies Stage #####
 
-FROM runtime as dependencies
+FROM runtime as dep
 
-# setup denpendencies for Contact GraspNet
-RUN sudo apt-get update && sudo apt-get install -y \
-  build-essential \
-  bzip2\
-  ca-certificates \
-  clang \
-  curl \
-  libblas-dev \
-  libbz2-dev \
-  libdbus-1-dev \
-  libdbus-glib-1-dev \
-  libexpat1-dev \
-  libfontconfig1-dev \
-  libfreetype6-dev \
-  libglib2.0-dev \
-  libgstreamer-plugins-base1.0-dev \
-  libgstreamer1.0-dev \
-  libhdf4-alt-dev \
-  libhdf5-dev \
-  libicu-dev \
-  libomp-dev \
-  libjpeg-dev \
-  libjsoncpp-dev \
-  libclang-10-dev \
-  libcurl4-openssl-dev \
-  libkrb5-dev \
-  liblcms2-dev \
-  libnetcdf-dev \
-  libogg-dev \
-  libpng-dev \
-  libssl-dev \
-  libtheora-dev \
-  libtiff-dev \
-  libtool \
-  libvorbis-dev \
-  libxcb1-dev \
-  libxml2-dev \
-  libxslt1-dev \
-  llvm \
-  lz4 \
-  qt5-default \
-  tcl-dev \
-  tk-dev \
-  uuid-dev \
-  zlib1g-dev \
-  cudnn9-cuda-12 \
-  && sudo rm -rf /var/lib/apt/lists/*
+RUN sudo sh -c 'echo "deb [arch=amd64] https://hsr-user:jD3k4G2e@packages.hsr.io/ros/ubuntu `lsb_release -cs` main" > /etc/apt/sources.list.d/tmc.list'
+RUN sudo sh -c 'echo "deb [arch=amd64] https://hsr-user:jD3k4G2e@packages.hsr.io/tmc/ubuntu `lsb_release -cs` multiverse main" >> /etc/apt/sources.list.d/tmc.list'
+RUN sudo sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list' 
+RUN wget https://hsr-user:jD3k4G2e@packages.hsr.io/tmc.key -O - | sudo apt-key add - 
+RUN wget https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc -O - | sudo apt-key add - 
+RUN wget https://packages.osrfoundation.org/gazebo.key -O - | sudo apt-key add - 
+RUN sudo sh -c 'mkdir -p /etc/apt/auth.conf.d' 
+RUN sudo sh -c '/bin/echo -e "machine packages.hsr.io\nlogin hsr-user\npassword jD3k4G2e" >/etc/apt/auth.conf.d/auth.conf'
+RUN sudo sh -c '/bin/echo -e "Package: ros-noetic-laser-ortho-projector\nPin: version 0.3.3*\nPin-Priority: 1001\n\nPackage: ros-noetic-laser-scan-matcher\nPin: version 0.3.3*\nPin-Priority: 1001\n\nPackage: ros-noetic-laser-scan-sparsifier\nPin: version 0.3.3*\nPin-Priority: 1001\n\nPackage: ros-noetic-laser-scan-splitter\nPin: version 0.3.3*\nPin-Priority: 1001\n\nPackage: ros-noetic-ncd-parser\nPin: version 0.3.3*\nPin-Priority: 1001\n\nPackage: ros-noetic-polar-scan-matcher\nPin: version 0.3.3*\nPin-Priority: 1001\n\nPackage: ros-noetic-scan-to-cloud-converter\nPin: version 0.3.3*\nPin-Priority: 1001\n\nPackage: ros-noetic-scan-tools\nPin: version 0.3.3*\nPin-Priority: 1001" > /etc/apt/preferences' 
 
-RUN pip install \
-  pillow==8.0.1 \
-  pyface==7.1.0 \
-  pygments==2.7.2 \
-  pyparsing==2.4.7 \
-  PyQt5==5.9.2 \
-  pyside2==5.11.0 \
-  python-dateutil==2.8.1 \
-  setuptools==50.3.1 \
-  sip==5.0.0 \
-  six==1.15.0 \
-  tornado==6.0.4 \
-  traits==6.1.1 \
-  traitsui==7.1.0 \
-  trimesh==3.8.12 \
-  wheel==0.35.1 \
-  h5py==2.10.0\
-  future==0.18.2 \
-  envisage==4.9.2 \
-  absl-py==0.11.0 \
-  astor==0.8.1 \
-  astunparse==1.6.3 \
-  apptools==4.5.0 \
-  cachetools==4.1.1 \
-  certifi==2020.6.20 \
-  configobj==5.0.6 \
-  chardet==3.0.4 \
-  cycler==0.10.0 \
-  kiwisolver==1.3.0 \
-  mkl==2021.1.1 \
-  mkl-service==2.4.0 \
-  mkl_fft==1.3.0 \
-  mkl_random==1.2.2 \
-  decorator==4.4.2 \
-  freetype-py==2.2.0 \
-  gast==0.3.3 \
-  google-auth==1.23.0 \
-  google-auth-oauthlib==0.4.2 \
-  google-pasta==0.2.0 \
-  grpcio==1.33.2 \
-  h5py==2.10.0 \
-  idna==2.10 \
-  imageio==2.9.0 \
-  importlib-metadata==2.0.0 \
-  keras-applications==1.0.8 \
-  keras-preprocessing==1.1.2 \
-  markdown==3.3.3 \
-  matplotlib==3.3.2 \
-  mayavi==4.7.1 \
-  networkx==2.5 \
-  numpy==1.19.2 \
-  olefile==0.46 \
-  oauthlib==3.1.0 \
-  opencv-python==4.4.0.46 \
-  opt-einsum==3.3.0 \
-  protobuf==3.13.0 \
-  pyasn1==0.4.8 \
-  pyasn1-modules==0.2.8 \
-  pyglet==1.5.9 \
-  pyopengl==3.1.0 \
-  pyrender==0.1.43 \
-  pyyaml==5.3.1 \
-  requests==2.24.0 \
-  requests-oauthlib==1.3.0 \
-  rsa==4.6 \
-  rtree \
-  scipy==1.4.1 \
-  shapely==1.7.1 \
-  six==1.15.0 \
-  tensorboard==2.2.2 \
-  tensorboard-plugin-wit==1.7.0 \
-  tensorflow-estimator==2.2.0 \
-  tensorflow-gpu==2.2.0 \
-  termcolor==1.1.0 \
-  urllib3==1.25.11 \
-  tqdm==4.51.0 \
-  traits==6.1.1 \
-  traitsui==7.1.0 \
-  trimesh==3.8.12 \
-  vtk \
-  werkzeug==1.0.1 \
-  wrapt==1.12.1 \
-  zipp==3.4.0 \
-  python-fcl==0.0.12
-
-# Some more tools
 RUN sudo apt-get update
-RUN sudo apt-get install -y net-tools \
-  && sudo apt-get install -y iputils-ping \
-  && sudo apt-get install -y lshw
+RUN sudo apt-get install ros-noetic-tmc-desktop-full -q -y --no-install-recommends
+
+RUN echo 'export ROS_HOME=~/.ros' >> ~/.bashrc
+RUN echo 'alias sim_mode='\''export ROS_MASTER_URI=http://localhost:11311 export PS1="\[\033[44;1;37m\]<local>\[\033[0m\]\w$ "'\''' >> ~/.bashrc
+RUN echo 'alias hsrb_mode='\''export ROS_MASTER_URI=http://hsrb.local:11311 export PS1="\[\033[41;1;37m\]<hsrb>\[\033[0m\]\w$ "'\''' >> ~/.bashrc
+
+RUN source home/$USERNAME/.bashrc
