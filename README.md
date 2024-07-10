@@ -24,7 +24,7 @@ docker run --rm --runtime=nvidia --gpus all ubuntu nvidia-smi
 
 If it works, skip to the configuration of [Contact Graspnet](#contact-graspnet)
 
-#### Troubleshooting
+## Troubleshooting
 
 *Nvidia Container Toolkit Configuration Error*
 
