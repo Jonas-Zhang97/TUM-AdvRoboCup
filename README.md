@@ -51,7 +51,7 @@ roslaunch hsrb_gazebo_launch hsrb_megaweb2015_world.launch
 
 ## Troubleshooting
 
-*Nvidia Container Toolkit Configuration Error*
+- *Nvidia Container Toolkit Configuration Error*
 
 If the following error code is encountered:
 
@@ -85,7 +85,7 @@ set it to false. Then, run the container once again without device remapping, se
 
 If the error persists, it could be the case that the container can't establish any connection to the GPUs, consult this [issue](https://github.com/NVIDIA/nvidia-docker/issues/1730) in official repo for a self examination.
 
-*Port 11311 Forwarding Error*
+- *Port 11311 Forwarding Error*
 
 If after running `roscore`, nothing is being prompt, it is possible that some processes is occuping the ros standard port 11311. In your local machine, list all the processes that are using port 11311:
 
