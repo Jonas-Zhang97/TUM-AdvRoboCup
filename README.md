@@ -26,6 +26,8 @@ If it works, skip to the configuration of [Contact Graspnet](#contact-graspnet)
 
 #### Troubleshooting
 
+*Nvidia Container Toolkit Configuration Error*
+
 If the following error code is encountered:
 
 ```bash
@@ -58,8 +60,43 @@ set it to false. Then, run the container once again without device remapping, se
 
 If the error persists, it could be the case that the container can't establish any connection to the GPUs, consult this [issue](https://github.com/NVIDIA/nvidia-docker/issues/1730) in official repo for a self examination.
 
+*Port 11311 Forwarding Error*
+
+If after running `roscore`, nothing is being prompt, it is possible that some processes is occuping the ros standard port 11311. In your local machine, list all the processes that are using port 11311:
+
+```bash
+sudo lsof -i :11311
+```
+
+And kill the corresponding processes with:
+
+```bash
+sudo kill <PID> 
+```
+
 ### Remote Development extension for VSCode
 
 To run the models in devcontainers, you have to download `remote development` extension in VSCode.
 
 ## HSRB Configuration
+
+After the container is built, try some basic command to verify if everything is correct. For example, run
+
+```bash
+roscore
+```
+
+If nothing is being prompt, consult *Port 11311 Forwarding Error* in [Troubleshooting](#troubleshooting) for a solution.
+
+You can now try to run the hsrb in simulator, for that, enter `sim_mode`:
+
+
+```bash
+sim_mode
+```
+
+In `sim_mode`, launch:
+
+```bash
+roslaunch hsrb_gazebo_launch hsrb_megaweb2015_world.launch
+```

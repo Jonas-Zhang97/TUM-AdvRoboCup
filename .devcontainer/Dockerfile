@@ -139,8 +139,15 @@ RUN sudo sh -c '/bin/echo -e "Package: ros-noetic-laser-ortho-projector\nPin: ve
 RUN sudo apt-get update
 RUN sudo apt-get install ros-noetic-tmc-desktop-full -q -y --no-install-recommends
 
+RUN echo -e "\nexport LOCALHOST_IP=\$(hostname -I | awk '{print \$1}')\necho \"Localhost IP: \$LOCALHOST_IP\"\n\nexport ROS_IP=\$LOCALHOST_IP\nexport ROS_MASTER_URI=http://\$LOCALHOST_IP:11311" >> ~/.bashrc
+
+
 RUN echo 'export ROS_HOME=~/.ros' >> ~/.bashrc
 RUN echo 'alias sim_mode='\''export ROS_MASTER_URI=http://localhost:11311 export PS1="\[\033[44;1;37m\]<local>\[\033[0m\]\w$ "'\''' >> ~/.bashrc
 RUN echo 'alias hsrb_mode='\''export ROS_MASTER_URI=http://hsrb.local:11311 export PS1="\[\033[41;1;37m\]<hsrb>\[\033[0m\]\w$ "'\''' >> ~/.bashrc
 
 RUN source home/$USERNAME/.bashrc
+
+RUN sudo apt install -qqy lsof \
+  net-tools\
+  lshw
