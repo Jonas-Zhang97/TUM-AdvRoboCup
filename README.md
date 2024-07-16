@@ -8,6 +8,12 @@ Supervisor: Fengyi Wang
 
 Developers: Xuhao Jin, Runcong Wang, Yueyang Zhang
 
+To clone the repo:
+
+```bash
+git clone git@github.com:Jonas-Zhang97/TUM-AdvRoboCup.git adv_robocup
+```
+
 ## Prerequest
 
 ### nvidia-container-toolkit
@@ -48,6 +54,20 @@ In `sim_mode`, launch:
 ```bash
 roslaunch hsrb_gazebo_launch hsrb_megaweb2015_world.launch
 ```
+
+## HSRB ROS Packages
+
+Download the codes of hsrb-samples, -moveit and -rosnav, then unzip them into the devcontainer home directory (i.e. `/workspaces/<repo_name>`).
+
+In `hsrb_ws/src`, create symbolic link to the packages:
+
+```bash
+ln -s /workspaces/adv_robocup/hsrb_moveit/ _hsrb_moveit && \
+ln -s /workspaces/adv_robocup/hsrb_samples/ _hsrb_samples && \
+ln -s /workspaces/adv_robocup/hsrb_rosnav/ _hsrb_rosnav
+```
+
+Build the workspace again
 
 ## Troubleshooting
 
