@@ -57,6 +57,8 @@ roslaunch hsrb_gazebo_launch hsrb_megaweb2015_world.launch
 
 ## HSRB ROS Packages
 
+More infomation can be found [here](https://docs.hsr.io/hsrio_manual_en/gitlab/gitlab.html)
+
 Download the codes of hsrb-samples, -moveit and -rosnav, then unzip them into the devcontainer home directory (i.e. `/workspaces/<repo_name>`).
 
 In `hsrb_ws/src`, create symbolic link to the packages:

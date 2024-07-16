@@ -151,31 +151,3 @@ RUN source home/$USERNAME/.bashrc
 RUN sudo apt install -qqy lsof \
   net-tools\
   lshw
-
-FROM dep AS moveit
-
-ENV HSRB_DIR=/workspaces/adv_robocup/hsrb_ws
-
-RUN source /home/$USERNAME/.bashrc
-RUN sudo mkdir -p $HSRB_DIR/src/moveit_utils
-WORKDIR /workspaces/adv_robocup/hsrb_ws/src/moveit_utils
-
-RUN rosdep update
-RUN sudo apt update
-RUN sudo apt-get dist-upgrade -qqy
-
-RUN sudo apt install -qqy ros-noetic-catkin python3-catkin-tools
-RUN sudo apt install -qqy python3-wstool
-
-RUN sudo wstool init .
-RUN sudo wstool merge -t . https://raw.githubusercontent.com/moveit/moveit/master/moveit.rosinstall
-RUN sudo wstool remove moveit_tutorials
-RUN sudo wstool update -t .
-
-WORKDIR /workspaces/adv_robocup/hsrb_ws/src
-RUN rosdep install -y --from-paths . --ignore-src --rosdistro noetic
-
-RUN sudo sh -c 'echo "deb http://packages.ros.org/ros-testing/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
-RUN sudo apt update
-
-WORKDIR /workspaces/adv_robocup/hsrb_ws
