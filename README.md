@@ -69,6 +69,26 @@ ln -s /workspaces/adv_robocup/hsrb_rosnav/ _hsrb_rosnav
 
 Build the workspace again
 
+## MoveIt
+
+Configure MoveIt. You can skip `moveit_tutorials` and `panda_moveit_config`.
+
+Note: Put every thing in `workspaces/adv_robocup/hsrb_ws/src/moveit_utils`, which is on the `.gitignore` list.
+
+## Build the workspace
+
+To build the workspace, first go to `src/` folder, use `rosdep` to complete the missing dependencies automatically:
+
+```bash
+rosdep install -y --from-paths . --ignore-src --rosdistro noetic
+```
+
+Then go to `hsrb_ws/`:
+
+```bash
+sudo catkin build -DCMAKE_BUILD_TYPE=Release
+```
+
 ## Troubleshooting
 
 - *Nvidia Container Toolkit Configuration Error*

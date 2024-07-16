@@ -13,10 +13,4 @@ hsrb_rosnav
 hsrb_ws/src/_*
 # MoveIt utils
 hsrb_ws/src/geometric_shapes/
-hsrb_ws/src/moveit/
-hsrb_ws/src/moveit_msgs/
-hsrb_ws/src/moveit_resources/
-hsrb_ws/src/moveit_visual_tools/
-hsrb_ws/src/panda_moveit_config/
-hsrb_ws/src/rviz_visual_tools/
-hsrb_ws/src/srdfdom/
+hsrb_ws/src/moveit_utils
