@@ -69,8 +69,6 @@ ln -s /workspaces/adv_robocup/hsrb_samples/ _hsrb_samples && \
 ln -s /workspaces/adv_robocup/hsrb_rosnav/ _hsrb_rosnav
 ```
 
-Build the workspace again
-
 ## MoveIt
 
 Configure MoveIt. You can skip `moveit_tutorials` and `panda_moveit_config`.

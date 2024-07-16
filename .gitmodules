@@ -1,4 +1,0 @@
-[submodule "hsrb_ws/src/adv-robocup-final"]
-	path = hsrb_ws/src/adv-robocup-final
-	url = git@gitlab.lrz.de:00000000014AEBD4/adv-robocup-final.git
-	branch = master
