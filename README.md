@@ -89,6 +89,12 @@ Then go to `hsrb_ws/`:
 sudo catkin build -DCMAKE_BUILD_TYPE=Release
 ```
 
+Try the following command (with gazebo simulator running) to verify build:
+
+```bash
+roslaunch hsrb_moveit_config hsrb_demo_with_controller.launch
+```
+
 ## Troubleshooting
 
 - *Nvidia Container Toolkit Configuration Error*
