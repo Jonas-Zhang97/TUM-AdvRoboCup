@@ -86,7 +86,7 @@ class Pick
 
   /* MoveIt */
   private:
-    moveit::planning_interface::MoveGroupInterface::Plan arm_plan_;
+    moveit::planning_interface::MoveGroupInterface::Plan body_plan_;
     moveit::planning_interface::MoveGroupInterface::Plan gripper_plan_;
     moveit::planning_interface::PlanningSceneInterface PSI_;
     std::vector<std::string> object_names_;

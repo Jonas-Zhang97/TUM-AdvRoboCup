@@ -35,7 +35,7 @@ bool Pick::init()
   whole_body_grp.setPlanningTime(30.0);
   whole_body_grp.setMaxAccelerationScalingFactor(0.3);
   whole_body_grp.setMaxVelocityScalingFactor(0.3);
-  whole_body_grp.setEndEffectorLink("arm_tool_link");
+  whole_body_grp.setEndEffectorLink("hand_camera_frame");
 
   // Initialize HSRB
   // openGripper();
@@ -73,7 +73,10 @@ void Pick::update()
 
 void Pick::pick()
 {
-  reorientBase();
+  // reorientBase();
+  prePickApproach();
+
+  /* legacy */
   // openGripper();
   // prePickApproach();
   // toPickPose();
@@ -113,25 +116,40 @@ void Pick::reorientBase()
 }
 
 
-// void Pick::prePickApproach()
-// {
-//   /* 
-//     A pre approach for the robot, will be followe by a straight line motion to the pick pose
-//   */
-//   std::vector<double> ready_value;
-//   ready_value = {0.15, 0.175, 0.349, -3.14, 1.047, 1.57, 0, 0};
-// 
-//   arm_torso_group.setPoseTarget(pre_approach_pose_);
-//   bool succ = (arm_torso_group.plan(arm_plan_) == moveit_msgs::MoveItErrorCodes::SUCCESS);
-// 
-//   if (!succ)
-//   {
-//     ROS_INFO_STREAM("Planning failed");
-//   }
-// 
-//   arm_torso_group.move();
-//   ROS_INFO_STREAM("Pre-pick goal reached");
-// }
+void Pick::prePickApproach()
+{
+  /* 
+    A pre approach for the robot, will be followe by a straight line motion to the pick pose
+  */
+
+  // compute the relative angle of the object
+  ROS_INFO_STREAM("got you");
+  double target_orient;
+  target_orient = atan2(target_position_[1], target_position_[0]);   // rad, with correct sign
+  
+  // define pre-approach pose
+  geometry_msgs::PoseStamped pre_approach_pose;
+  pre_approach_pose.header.frame_id = ref_frame_;
+  pre_approach_pose.pose.position.x = target_position_[0] - 0.18 * cos(target_orient);
+  pre_approach_pose.pose.position.y = target_position_[1] - 0.18 * sin(target_orient);
+  pre_approach_pose.pose.position.z = target_position_[2];
+
+  tf2::Quaternion quaternion;
+  quaternion.setRPY(3.14, 1.57, -target_orient);
+
+  pre_approach_pose.pose.orientation = tf2::toMsg(quaternion);
+
+  whole_body_grp.setPoseTarget(pre_approach_pose_);
+  bool succ = (whole_body_grp.plan(body_plan_) == moveit_msgs::MoveItErrorCodes::SUCCESS);
+
+  if (!succ)
+  {
+    ROS_INFO_STREAM("Planning failed");
+  }
+
+  whole_body_grp.move();
+  ROS_INFO_STREAM("Pre-pick goal reached");
+}
 // 
 // void Pick::openGripper()
 // {
