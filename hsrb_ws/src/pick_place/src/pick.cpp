@@ -29,13 +29,15 @@ bool Pick::init()
   gripper_close_value_.points[0].time_from_start = ros::Duration(1.0);
   
   // Set values for MoveIt
-  ref_frame_ = "base_footprint";
+  ref_frame_ = "odom";
 
   whole_body_grp.setPlannerId("RRTConnectkConfigDefault");
   whole_body_grp.setPlanningTime(30.0);
   whole_body_grp.setMaxAccelerationScalingFactor(0.3);
   whole_body_grp.setMaxVelocityScalingFactor(0.3);
-  whole_body_grp.setEndEffectorLink("hand_camera_frame");
+  // whole_body_grp.setEndEffectorLink("hand_camera_frame");
+  const std::string end_effector_link = whole_body_grp.getEndEffectorLink();
+  ROS_INFO_STREAM("End effector link: " << end_effector_link);
 
   // Initialize HSRB
   // openGripper();
@@ -123,7 +125,6 @@ void Pick::prePickApproach()
   */
 
   // compute the relative angle of the object
-  ROS_INFO_STREAM("got you");
   double target_orient;
   target_orient = atan2(target_position_[1], target_position_[0]);   // rad, with correct sign
   
@@ -135,11 +136,13 @@ void Pick::prePickApproach()
   pre_approach_pose.pose.position.z = target_position_[2];
 
   tf2::Quaternion quaternion;
-  quaternion.setRPY(3.14, 1.57, -target_orient);
+  quaternion.setRPY(-1.57, 1.57, target_orient - 1.57);
 
   pre_approach_pose.pose.orientation = tf2::toMsg(quaternion);
 
-  whole_body_grp.setPoseTarget(pre_approach_pose_);
+  ROS_INFO_STREAM("Pre-approach pose: \n" << pre_approach_pose.pose);
+
+  whole_body_grp.setPoseTarget(pre_approach_pose);
   bool succ = (whole_body_grp.plan(body_plan_) == moveit_msgs::MoveItErrorCodes::SUCCESS);
 
   if (!succ)

@@ -79,7 +79,6 @@ class Pick
     std::string ref_frame_;
     Eigen::Vector3d target_position_;
     std::vector<double> transport_value_;
-    geometry_msgs::PoseStamped pre_approach_pose_;
     geometry_msgs::Pose pick_pose_;
     geometry_msgs::Pose retreat_pose_;
     geometry_msgs::Pose transport_pose_;
