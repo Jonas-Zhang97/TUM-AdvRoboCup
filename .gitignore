@@ -14,6 +14,8 @@ hsrb_ws/src/_*
 # MoveIt utils
 hsrb_ws/src/geometric_shapes/
 hsrb_ws/src/moveit_utils
+# reference from previous semester
+ref/
 
 # Just in case
 hsrb_ws/src/hsrb_*_devel
