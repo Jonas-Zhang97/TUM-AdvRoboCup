@@ -10,9 +10,7 @@ bool Pick::init()
   pick_target_sub_ = nh_.subscribe(pick_target_topic_, 1, &Pick::poseCallback, this);
 
   gripper_pub_ = nh_.advertise<trajectory_msgs::JointTrajectory>("/gripper_controller/command", 1);
-  torso_pub_ = nh_.advertise<trajectory_msgs::JointTrajectory>("/torso_controller/command", 1);
   pick_done_pub_ = nh_.advertise<std_msgs::Bool>(pick_done_topic_, 1);
-  label_pick_pub_ = nh_.advertise<project_msgs::LabeledCentroid>("/label_pick", 1);
 
   // Initialize flags
   command_ = false;
@@ -29,17 +27,16 @@ bool Pick::init()
   gripper_close_value_.points[0].time_from_start = ros::Duration(1.0);
   
   // Set values for MoveIt
-  ref_frame_ = "odom";
+  ref_frame_ = "base_link";
 
   whole_body_grp.setPlannerId("RRTConnectkConfigDefault");
-  whole_body_grp.setPlanningTime(10.0);
-  whole_body_grp.setMaxAccelerationScalingFactor(0.3);
-  whole_body_grp.setMaxVelocityScalingFactor(0.3);
+  whole_body_grp.setPlanningTime(30.0);
+  whole_body_grp.setMaxAccelerationScalingFactor(0.1);
+  whole_body_grp.setMaxVelocityScalingFactor(0.1);
   whole_body_grp.allowReplanning(true);
   whole_body_grp.setNumPlanningAttempts(10);
   // whole_body_grp.setEndEffectorLink("hand_camera_frame");
   const std::string end_effector_link = whole_body_grp.getEndEffectorLink();
-  ROS_INFO_STREAM("End effector link: " << end_effector_link);
 
   // Initialize HSRB
   // openGripper();
@@ -61,7 +58,6 @@ void Pick::update()
 
     // Publish msgs that are needed
     pick_done_pub_.publish(pick_done_);
-    label_pick_pub_.publish(labeled_centroid_);
 
     // Clear all collision objects in the planning scene
     object_names_ = PSI_.getKnownObjectNames();
