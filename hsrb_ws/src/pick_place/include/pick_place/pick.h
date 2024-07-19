@@ -78,14 +78,15 @@ class Pick
     // some assistance vars
     std::string ref_frame_;
     Eigen::Vector3d target_position_;
+    double target_orientation_;
     std::vector<double> transport_value_;
-    geometry_msgs::Pose pick_pose_;
     geometry_msgs::Pose retreat_pose_;
     geometry_msgs::Pose transport_pose_;
 
   /* MoveIt */
   private:
     moveit::planning_interface::MoveGroupInterface::Plan body_plan_;
+    moveit::planning_interface::MoveGroupInterface::Plan arm_plan_;
     moveit::planning_interface::MoveGroupInterface::Plan gripper_plan_;
     moveit::planning_interface::PlanningSceneInterface PSI_;
     std::vector<std::string> object_names_;

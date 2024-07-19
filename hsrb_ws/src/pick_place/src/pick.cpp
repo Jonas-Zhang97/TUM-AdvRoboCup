@@ -19,7 +19,7 @@ bool Pick::init()
   pick_done_.data = true;
   
   // Pre-defined poses
-  transport_value_ = {0.05, 0.0, -1.57, -1.57, 0.0, 0.0};
+  transport_value_ = {0.0, 0.0, 0.0, -1.57, 0.0, 0.0};
   gripper_close_value_.joint_names.resize(1);
   gripper_close_value_.joint_names[0] = "hand_motor_joint";
 
@@ -32,9 +32,11 @@ bool Pick::init()
   ref_frame_ = "odom";
 
   whole_body_grp.setPlannerId("RRTConnectkConfigDefault");
-  whole_body_grp.setPlanningTime(30.0);
+  whole_body_grp.setPlanningTime(10.0);
   whole_body_grp.setMaxAccelerationScalingFactor(0.3);
   whole_body_grp.setMaxVelocityScalingFactor(0.3);
+  whole_body_grp.allowReplanning(true);
+  whole_body_grp.setNumPlanningAttempts(10);
   // whole_body_grp.setEndEffectorLink("hand_camera_frame");
   const std::string end_effector_link = whole_body_grp.getEndEffectorLink();
   ROS_INFO_STREAM("End effector link: " << end_effector_link);
@@ -77,6 +79,10 @@ void Pick::pick()
 {
   // reorientBase();
   prePickApproach();
+  openGripper();
+  toPickPose();
+  postPickRetreat();
+  toTransportPose();
 
   /* legacy */
   // openGripper();
@@ -123,20 +129,16 @@ void Pick::prePickApproach()
   /* 
     A pre approach for the robot, will be followe by a straight line motion to the pick pose
   */
-
-  // compute the relative angle of the object
-  double target_orient;
-  target_orient = atan2(target_position_[1], target_position_[0]);   // rad, with correct sign
   
   // define pre-approach pose
   geometry_msgs::PoseStamped pre_approach_pose;
   pre_approach_pose.header.frame_id = ref_frame_;
-  pre_approach_pose.pose.position.x = target_position_[0] - 0.18 * cos(target_orient);
-  pre_approach_pose.pose.position.y = target_position_[1] - 0.18 * sin(target_orient);
+  pre_approach_pose.pose.position.x = target_position_[0] - 0.18 * cos(target_orientation_);
+  pre_approach_pose.pose.position.y = target_position_[1] - 0.18 * sin(target_orientation_);
   pre_approach_pose.pose.position.z = target_position_[2];
 
   tf2::Quaternion quaternion;
-  quaternion.setRPY(-1.57, 1.57, target_orient - 1.57);
+  quaternion.setRPY(-1.57, -1.57, target_orientation_ - 1.57);
 
   pre_approach_pose.pose.orientation = tf2::toMsg(quaternion);
 
@@ -154,40 +156,43 @@ void Pick::prePickApproach()
   ROS_INFO_STREAM("Pre-pick goal reached");
 }
 // 
-// void Pick::openGripper()
-// {
+void Pick::openGripper()     // TODO: Implement this
+{
 //   std::vector<double> open_value = {-0.043};        // NOTE: set to default for testing
 //   gripper_group.setJointValueTarget(open_value);
 //   gripper_group.plan(gripper_plan_);
 //   gripper_group.move();
 //   ROS_INFO_STREAM("Gripper opened");
-// }
+}
 // 
-// void Pick::toPickPose()
-// {
-//   pick_pose_ = pre_approach_pose_.pose;
-//   pick_pose_.position.x += 0.26;
-//   // pick_pose_.position.z -= 0.025;
-// 
-//   std::vector<geometry_msgs::Pose> waypoints;
-//   waypoints.push_back(pick_pose_);
-// 
-//   moveit_msgs::RobotTrajectory trajectory;
-// 
-//   double eef_step = 0.01;  // Resolution of the Cartesian path
-//   double jump_threshold = 0.0;  // No jump threshold
-// 
-//   double fraction = arm_torso_group.computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory);
-// 
-//   int trajectory_points = trajectory.joint_trajectory.points.size();
-//   ROS_INFO_STREAM("Number of points in the trajectory = " << trajectory_points);
-// 
-//   arm_torso_group.execute(trajectory);
-// 
-//   geometry_msgs::PoseStamped pick_pose;
-//   pick_pose = arm_torso_group.getCurrentPose("arm_tool_link");
-//   ROS_INFO_STREAM("Arrived at: " << pick_pose.pose.position);
-// }
+void Pick::toPickPose()
+{
+  geometry_msgs::Pose pick_pose;
+  pick_pose.position.x = target_position_[0] + 0.03 * cos(target_orientation_);
+  pick_pose.position.y = target_position_[1] + 0.03 * sin(target_orientation_);
+  pick_pose.position.z = target_position_[2];
+
+  tf2::Quaternion quaternion;
+  quaternion.setRPY(-1.57, -1.57, target_orientation_ - 1.57);
+  pick_pose.orientation = tf2::toMsg(quaternion);
+  ROS_INFO_STREAM("Pick pose: " << pick_pose);
+
+  std::vector<geometry_msgs::Pose> waypoints;
+  waypoints.push_back(pick_pose);
+
+  moveit_msgs::RobotTrajectory trajectory;
+
+  double eef_step = 0.01;  // Resolution of the Cartesian path
+  double jump_threshold = 0.0;  // No jump threshold
+
+  double fraction = whole_body_grp.computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory);
+
+  ROS_INFO_STREAM("Straight line generation rate = " << fraction);
+
+  whole_body_grp.execute(trajectory);
+
+  ROS_INFO_STREAM("Arrived at: " << pick_pose.position);
+}
 // 
 // void Pick::closeGripper()
 // {
@@ -196,39 +201,47 @@ void Pick::prePickApproach()
 // }
 //
 // 
-// void Pick::postPickRetreat()
-// {
-//   retreat_pose_ = pick_pose_;
-//   retreat_pose_.position.z += 0.05;
-// 
-//   geometry_msgs::Pose retreat_pose_1;
-//   retreat_pose_1 = retreat_pose_;
-//   retreat_pose_1.position.x -= 0.28;
-// 
-//   std::vector<geometry_msgs::Pose> waypoints;
-//   waypoints.push_back(retreat_pose_);
-//   waypoints.push_back(retreat_pose_1);
-// 
-//   moveit_msgs::RobotTrajectory trajectory;
-// 
-//   double eef_step = 0.01;  // Resolution of the Cartesian path
-//   double jump_threshold = 0.0;  // No jump threshold
-// 
-//   double fraction = arm_torso_group.computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory);
-// 
-//   arm_torso_group.execute(trajectory);
-// 
-//   ROS_INFO_STREAM("Retreated");
-// }
-// 
-// void Pick::toTransportPose()
-// {
-//   arm_torso_group.setJointValueTarget(transport_value_);
-//   arm_torso_group.plan(arm_plan_);
-//   arm_torso_group.move();
-// 
-//   ROS_INFO_STREAM("Ready to go");
-// }
+void Pick::postPickRetreat()
+{
+  geometry_msgs::Pose post_pick_pose_1;
+  post_pick_pose_1.position.x = target_position_[0] - 0.03 * cos(target_orientation_);
+  post_pick_pose_1.position.y = target_position_[1] - 0.03 * sin(target_orientation_);
+  post_pick_pose_1.position.z = target_position_[2] + 0.1;
+
+  geometry_msgs::Pose post_pick_pose_2;
+  post_pick_pose_2.position.x = target_position_[0] - 0.21 * cos(target_orientation_);
+  post_pick_pose_2.position.y = target_position_[1] - 0.21 * sin(target_orientation_);
+  post_pick_pose_2.position.z = target_position_[2] + 0.1;
+
+  tf2::Quaternion quaternion;
+  quaternion.setRPY(-1.57, -1.57, target_orientation_ - 1.57);
+  post_pick_pose_1.orientation = tf2::toMsg(quaternion);
+  post_pick_pose_2.orientation = tf2::toMsg(quaternion);
+
+  std::vector<geometry_msgs::Pose> waypoints;
+  waypoints.push_back(post_pick_pose_1);
+  waypoints.push_back(post_pick_pose_2);
+
+  moveit_msgs::RobotTrajectory trajectory;
+
+  double eef_step = 0.01;  // Resolution of the Cartesian path
+  double jump_threshold = 0.0;  // No jump threshold
+
+  double fraction = whole_body_grp.computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory);
+
+  whole_body_grp.execute(trajectory);
+
+  ROS_INFO_STREAM("Retreated");
+}
+
+void Pick::toTransportPose()
+{
+  arm_grp.setJointValueTarget(transport_value_);
+  arm_grp.plan(arm_plan_);
+  arm_grp.move();
+
+  ROS_INFO_STREAM("Ready to go");
+}
 
 
 void Pick::poseCallback(const project_msgs::LabeledCentroid::ConstPtr &msg)
@@ -242,6 +255,8 @@ void Pick::poseCallback(const project_msgs::LabeledCentroid::ConstPtr &msg)
   target_position_ << msg->pose.pose.position.x,
                       msg->pose.pose.position.y,
                       msg->pose.pose.position.z;
+                      
+  target_orientation_ = atan2(target_position_[1], target_position_[0]);   // rad
 
   // pre_approach_pose_.header.frame_id = ref_frame_;
   // pre_approach_pose_.pose.position = msg->pose.pose.position;
