@@ -51,12 +51,9 @@ class Pick
     ros::Subscriber pick_target_sub_;   // where is the target object, store this in a local variable
 
     ros::Publisher gripper_pub_;
-    ros::Publisher torso_pub_;
     ros::Publisher pick_done_pub_;
-    ros::Publisher label_pick_pub_;
 
   private:
-    std::string pick_comm_topic_;
     std::string pick_target_topic_;
 
     std::string pick_done_topic_;
@@ -81,7 +78,6 @@ class Pick
     double target_orientation_;
     std::vector<double> transport_value_;
     geometry_msgs::Pose retreat_pose_;
-    geometry_msgs::Pose transport_pose_;
 
   /* MoveIt */
   private:

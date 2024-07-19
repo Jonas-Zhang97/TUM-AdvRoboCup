@@ -13,12 +13,12 @@
 class Place
 {
   private:
-    moveit::planning_interface::MoveGroupInterface arm_torso_group;
-    moveit::planning_interface::MoveGroupInterface arm_group;
-    moveit::planning_interface::MoveGroupInterface gripper_group;
+    moveit::planning_interface::MoveGroupInterface whole_body_grp;
+    moveit::planning_interface::MoveGroupInterface arm_grp;
+    moveit::planning_interface::MoveGroupInterface gripper_grp;
 
   public:
-    Place():arm_torso_group("arm_torso"), arm_group("arm"), gripper_group("gripper") {};
+    Place():whole_body_grp("whole_body"), arm_grp("arm"), gripper_grp("gripper") {};
 
   public:
     bool init();
@@ -29,14 +29,11 @@ class Place
     void place();
   
   private:
-    void lowerTorso();
     void prePlaceApproach();
     void toPlacePose();
     void openGripper();
     void postPlaceRetreat();
-    void closeGripper();
     void homing();
-    void higherTorso();
 
   /* ROS Communication */
   public:
@@ -45,13 +42,10 @@ class Place
   private:
     ros::Subscriber place_target_sub_;   // where is the target object, store this in a local variable
 
-    ros::Publisher torso_pub_;
     ros::Publisher gripper_pub_;
-    ros::Publisher move_base_pub_;
     ros::Publisher place_done_pub_;
 
   public:
-    std::string place_comm_topic_;
     std::string place_target_topic_;
 
     std::string place_done_topic_;
@@ -70,18 +64,18 @@ class Place
 
     // some assistance vars
     std::string ref_frame_;
-    Eigen::Vector3d target_position_;
+    geometry_msgs::Point target_position_;
+    double target_orientation_;
+
     std::vector<double> arm_home_value_;
     // std::vector<double> gripper_open_value_;
-    std::vector<double> gripper_close_value_;
-    geometry_msgs::PoseStamped pre_approach_pose_;
-    geometry_msgs::Pose place_pose_;
-    geometry_msgs::Pose retreat_pose_;
+    trajectory_msgs::JointTrajectory gripper_close_value_;
 
     trajectory_msgs::JointTrajectory gripper_open_value_;
 
   /* MoveIt */
   private:
+    moveit::planning_interface::MoveGroupInterface::Plan whole_body_plan_;
     moveit::planning_interface::MoveGroupInterface::Plan arm_plan_;
     moveit::planning_interface::MoveGroupInterface::Plan gripper_plan_;
     moveit::planning_interface::PlanningSceneInterface PSI_;
