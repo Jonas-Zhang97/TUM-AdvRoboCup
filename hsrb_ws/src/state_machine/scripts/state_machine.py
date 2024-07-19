@@ -7,6 +7,19 @@ from dataclasses import dataclass, field
 from typing import List
 
 
+"""
+Middle Flexible States:
+Navigation/ Look For/ Pick/ Place/Listen/ Audio Output/ 
+Read from config in the future
+
+Fixed States:
+Start/ End/ Emergency Stop/ 
+
+Listen: when the speech is recognized, 
+"""
+
+
+
 # class stateDescription:
 @dataclass
 class stateDescription:
@@ -33,9 +46,9 @@ class stateMachineGenerator(smach.State):
      :param pre_requisite: list of pre_requisite states for state matching
      :param post_requisite: list of post_requisite states for state matching
      """
-    def __init__(self,stateDescription):
-        self.lpreRequsite = stateDescription.preRequisite
-        self.lpostRequsite = stateDescription.preRequisite
+    def __init__(self,state_description):
+        self.lpreRequsite = state_description.preRequisite
+        self.lpostRequsite = state_description.preRequisite
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
 
     def check_pre_requisite(self):
@@ -49,6 +62,47 @@ class stateMachineGenerator(smach.State):
             return 'succeeded'
         else:
             return 'failed'
+
+
+# Define start state
+class startState(smach.State):# TODO: Consider open door as start signal
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+        self.sD = stateDescription("startState",
+                                   ["None"],
+                                   ["NextState"]) # TODO: decide the next states
+
+    def execute(self):
+        command = ["ros run", "pkg", "node.py"]
+        process = subprocess.call(command)
+        if process == 0:
+            return 'succeeded'
+        else:
+            return 'failed'
+
+
+
+# Define end state
+class endState(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+        self.sD = stateDescription("endState",
+                                   ["PreviousState"], #TODO: decide the previous state
+                                   ["None"])
+    def execute(self):
+        command = ["ros run", "pkg", "node.py"]
+        process = subprocess.call(command)
+        if process == 0:
+            return 'succeeded'
+        else:
+            return 'failed'
+
+
+
+
+
+
+
 
 
 
