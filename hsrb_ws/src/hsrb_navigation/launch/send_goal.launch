@@ -1,0 +1,7 @@
+<launch>
+  <arg name="goals_file" default="$(find hsrb_navigation)/config/goals.yaml"/>
+
+  <node pkg="hsrb_navigation" type="send_goal_action_yaml.py" name="send_goal" output="screen">
+    <param name="goals_file" value="$(arg goals_file)"/>
+  </node>
+</launch>
