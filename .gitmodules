@@ -1,0 +1,3 @@
+[submodule "hsrb_ws/src/sam_for_pointcloud_segmentation"]
+	path = hsrb_ws/src/sam_for_pointcloud_segmentation
+	url = git@github.com:vvyric/sam_for_pointcloud_segmentation.git
