@@ -30,8 +30,7 @@ class Pick
     void pick();
   
   private:
-    // void lowerTorso();
-    void reorientBase();
+    void computeTargetOrientation();
     void prePickApproach();
     void openGripper();
     void toPickPose();
@@ -74,7 +73,7 @@ class Pick
 
     // some assistance vars
     std::string ref_frame_;
-    Eigen::Vector3d target_position_;
+    geometry_msgs::Point target_position_;
     double target_orientation_;
     std::vector<double> transport_value_;
     geometry_msgs::Pose retreat_pose_;

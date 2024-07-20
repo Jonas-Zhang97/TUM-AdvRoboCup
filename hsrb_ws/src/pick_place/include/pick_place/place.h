@@ -29,6 +29,7 @@ class Place
     void place();
   
   private:
+    void computeTargetOrientation();
     void prePlaceApproach();
     void toPlacePose();
     void openGripper();

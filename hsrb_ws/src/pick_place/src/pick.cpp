@@ -27,7 +27,7 @@ bool Pick::init()
   gripper_close_value_.points[0].time_from_start = ros::Duration(1.0);
   
   // Set values for MoveIt
-  ref_frame_ = "base_link";
+  ref_frame_ = "odom";
 
   whole_body_grp.setPlannerId("RRTConnectkConfigDefault");
   whole_body_grp.setPlanningTime(30.0);
@@ -73,7 +73,7 @@ void Pick::update()
 
 void Pick::pick()
 {
-  // reorientBase();
+  computeTargetOrientation();
   prePickApproach();
   openGripper();
   toPickPose();
@@ -89,36 +89,17 @@ void Pick::pick()
   // toTransportPose();
 }
 
-void Pick::reorientBase()
+void Pick::computeTargetOrientation()
 {
-  /*
-    reorient the base of the robot to face the object
-  */
-  double target_orient;
-  target_orient = atan2(target_position_[1], target_position_[0]);   // rad
+  geometry_msgs::Point current_base_position;
+  current_base_position = whole_body_grp.getCurrentPose("base_link").pose.position;
+  geometry_msgs::Vector3 vec;
+  vec.x = target_position_.x - current_base_position.x;
+  vec.y = target_position_.y - current_base_position.y;
+  vec.z = target_position_.z - current_base_position.z;
 
-  std::vector<double> group_reorient_value;
-  group_reorient_value = whole_body_grp.getCurrentJointValues();
-
-  //TODO: delete after testing
-  ROS_INFO_STREAM("Current joint values: ");
-  for (const auto& value : group_reorient_value) {
-    ROS_INFO_STREAM(value << " ");
-  }
-  ROS_INFO_STREAM(std::endl); // New line after printing all values
-
-  group_reorient_value[2] += target_orient;
-
-  // TODO: delete after testing
-  ROS_INFO_STREAM("Reoriented joint values: ");
-  for (const auto& value : group_reorient_value) {
-    ROS_INFO_STREAM(value << " ");
-  }
-  ROS_INFO_STREAM(std::endl); // New line after printing all values
-
-  // Set new orientation
+  target_orientation_ = atan2(vec.y, vec.x);
 }
-
 
 void Pick::prePickApproach()
 {
@@ -129,9 +110,9 @@ void Pick::prePickApproach()
   // define pre-approach pose
   geometry_msgs::PoseStamped pre_approach_pose;
   pre_approach_pose.header.frame_id = ref_frame_;
-  pre_approach_pose.pose.position.x = target_position_[0] - 0.18 * cos(target_orientation_);
-  pre_approach_pose.pose.position.y = target_position_[1] - 0.18 * sin(target_orientation_);
-  pre_approach_pose.pose.position.z = target_position_[2];
+  pre_approach_pose.pose.position.x = target_position_.x - 0.18 * cos(target_orientation_);
+  pre_approach_pose.pose.position.y = target_position_.y - 0.18 * sin(target_orientation_);
+  pre_approach_pose.pose.position.z = target_position_.z;
 
   tf2::Quaternion quaternion;
   quaternion.setRPY(-1.57, -1.57, target_orientation_ - 1.57);
@@ -164,9 +145,9 @@ void Pick::openGripper()     // TODO: Implement this
 void Pick::toPickPose()
 {
   geometry_msgs::Pose pick_pose;
-  pick_pose.position.x = target_position_[0] + 0.03 * cos(target_orientation_);
-  pick_pose.position.y = target_position_[1] + 0.03 * sin(target_orientation_);
-  pick_pose.position.z = target_position_[2];
+  pick_pose.position.x = target_position_.x - 0.03 * cos(target_orientation_);
+  pick_pose.position.y = target_position_.y - 0.03 * sin(target_orientation_);
+  pick_pose.position.z = target_position_.z;
 
   tf2::Quaternion quaternion;
   quaternion.setRPY(-1.57, -1.57, target_orientation_ - 1.57);
@@ -200,14 +181,14 @@ void Pick::toPickPose()
 void Pick::postPickRetreat()
 {
   geometry_msgs::Pose post_pick_pose_1;
-  post_pick_pose_1.position.x = target_position_[0] - 0.03 * cos(target_orientation_);
-  post_pick_pose_1.position.y = target_position_[1] - 0.03 * sin(target_orientation_);
-  post_pick_pose_1.position.z = target_position_[2] + 0.1;
+  post_pick_pose_1.position.x = target_position_.x - 0.03 * cos(target_orientation_);
+  post_pick_pose_1.position.y = target_position_.y - 0.03 * sin(target_orientation_);
+  post_pick_pose_1.position.z = target_position_.z + 0.1;
 
   geometry_msgs::Pose post_pick_pose_2;
-  post_pick_pose_2.position.x = target_position_[0] - 0.21 * cos(target_orientation_);
-  post_pick_pose_2.position.y = target_position_[1] - 0.21 * sin(target_orientation_);
-  post_pick_pose_2.position.z = target_position_[2] + 0.1;
+  post_pick_pose_2.position.x = target_position_.x - 0.21 * cos(target_orientation_);
+  post_pick_pose_2.position.y = target_position_.y - 0.21 * sin(target_orientation_);
+  post_pick_pose_2.position.z = target_position_.z + 0.1;
 
   tf2::Quaternion quaternion;
   quaternion.setRPY(-1.57, -1.57, target_orientation_ - 1.57);
@@ -248,11 +229,7 @@ void Pick::poseCallback(const project_msgs::LabeledCentroid::ConstPtr &msg)
 
   object_label_ = msg->label;
 
-  target_position_ << msg->pose.pose.position.x,
-                      msg->pose.pose.position.y,
-                      msg->pose.pose.position.z;
-                      
-  target_orientation_ = atan2(target_position_[1], target_position_[0]);   // rad
+  target_position_ = msg->pose.pose.position;
 
   // pre_approach_pose_.header.frame_id = ref_frame_;
   // pre_approach_pose_.pose.position = msg->pose.pose.position;
@@ -265,5 +242,5 @@ void Pick::poseCallback(const project_msgs::LabeledCentroid::ConstPtr &msg)
 
   // pre_approach_pose_.pose.orientation = tf2::toMsg(quaternion);
   
-  ROS_INFO_STREAM("Command received, position: " << target_position_.transpose());
+  ROS_INFO_STREAM("Command received, position: " << target_position_);
 }

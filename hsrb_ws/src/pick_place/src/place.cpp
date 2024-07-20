@@ -23,7 +23,7 @@ bool Place::init()
   gripper_close_value_.points[0].positions[0] = 0.0174;
   gripper_close_value_.points[0].time_from_start = ros::Duration(1.0);
 
-  ref_frame_ = "base_link";
+  ref_frame_ = "odom";
 
   whole_body_grp.setPlannerId("RRTConnectkConfigDefault");
   whole_body_grp.setPlanningTime(10.0);
@@ -59,11 +59,24 @@ void Place::update()
 
 void Place::place()
 {
+  computeTargetOrientation();
   prePlaceApproach();
   toPlacePose();
   openGripper();
   postPlaceRetreat();
   homing();
+}
+
+void Place::computeTargetOrientation()
+{
+  geometry_msgs::Point current_base_position;
+  current_base_position = whole_body_grp.getCurrentPose("base_link").pose.position;
+  geometry_msgs::Vector3 vec;
+  vec.x = target_position_.x - current_base_position.x;
+  vec.y = target_position_.y - current_base_position.y;
+  vec.z = target_position_.z - current_base_position.z;
+
+  target_orientation_ = atan2(vec.y, vec.x);
 }
 
 void Place::prePlaceApproach()
