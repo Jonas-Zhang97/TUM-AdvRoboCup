@@ -4,6 +4,3 @@
 [submodule "hsrb_ws/src/state_machine/CompetitionTemplate"]
 	path = hsrb_ws/src/state_machine/CompetitionTemplate
 	url = https://github.com/johaq/CompetitionTemplate.git
-[submodule "hsrb_ws/src/ultralytics_ros"]
-	path = hsrb_ws/src/ultralytics_ros
-	url = git@github.com:Alpaca-zip/ultralytics_ros.git
