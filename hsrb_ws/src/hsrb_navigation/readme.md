@@ -9,23 +9,31 @@ $ rviz -d $(rospack find hsrb_rosnav_config)/launch/hsrb.rviz
 
 rosrun rviz rviz  -d `rospack find hsrb_common_launch`/config/hsrb_display_full_hsrb.rviz
 
-$ roslaunch hsrb_navigation hsrb_nav_ics.launch map_file:=/workspaces/TUM-AdvRoboCup/hsrb_ws/src/hsrb_navigation/map/map.yaml
+$ roslaunch hsrb_navigation hsrb_nav_ics.launch map_file:=/workspaces/cup/hsrb_ws/src/hsrb_navigation/map/map.yaml
 
 rosrun tf tf_echo /map /base_link
 可以使用 tf_echo 命令直接查看机器人在 /map 坐标系下的位置和姿态
 ##  Initialization of odometry
+roslaunch hsrb_navigation amcl.launch
+rosservice call /amcl/global_localization "{}"
+rosservice list | grep /amcl
+rosrun rqt_reconfigure rqt_reconfigure
+sudo apt-get install ros-noetic-laser-scan-matcher
 
 
 
-rviz -d $(rospack find hsrb_navigation)/rviz/mapping.rviz
+$ roslaunch hsrb_navigation hsrb_nav_ics.launch map_file:=/workspaces/cup/hsrb_ws/src/hsrb_navigation/map/map.yaml
 
-$ rostopic echo move_base_simple/goal
+$ rviz -d $(rospack find hsrb_navigation)/rviz/mapping.rviz
+
 
 
 rosrun hsrb_navigation send_goal_message_yaml.py
 rosrun hsrb_navigation send_goal_action_yaml.py
-roslaunch hsrb_navigation send_goal.launch
+$ roslaunch hsrb_navigation send_goal.launch
 
+
+$ rostopic echo move_base_simple/goal
 ###################################################################################
 sudo apt-get install ros-noetic-moveit
 
