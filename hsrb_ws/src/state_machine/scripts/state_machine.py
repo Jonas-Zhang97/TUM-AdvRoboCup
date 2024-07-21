@@ -80,7 +80,7 @@ class stateDescription:
     preRequisite: List[str] = field(default_factory=list)
     postRequisite: List[str] = field(default_factory=list)
 
-
+## TODO: count(YOLO), Look For(Waving hands), Follow
 # TODO: read from config file
 start = stateDescription("start",
                          ["None"],
@@ -175,7 +175,7 @@ class endState(smach.State):
 stateList = rospy.get_param('stateList')
 
 
-def stateOdering(stateList):
+def stateOdering(stateList):  #TODO
     """
     Function to order the states in a state machine
     :param stateList: list of stateDescriptions
