@@ -34,6 +34,10 @@
 			"--gpus=all",
 			"--privileged"
 	],
+	"mounts": [
+		"source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind",
+		"source=/dev/dri,target=/dev/dri,type=bind"
+	]
 	// "mounts": [
 	// 		{
 	// 				"source": "/dev/dri",

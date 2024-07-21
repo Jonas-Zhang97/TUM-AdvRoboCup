@@ -11,6 +11,8 @@
 #include <project_msgs/LabeledCentroid.h>
 #include <moveit_msgs/CollisionObject.h>
 
+#include <tmc_control_msgs/GripperApplyEffortActionGoal.h>
+
 class Pick
 {
   private:
@@ -30,8 +32,7 @@ class Pick
     void pick();
   
   private:
-    // void lowerTorso();
-    void reorientBase();
+    void computeTargetOrientation();
     void prePickApproach();
     void openGripper();
     void toPickPose();
@@ -51,17 +52,14 @@ class Pick
     ros::Subscriber pick_target_sub_;   // where is the target object, store this in a local variable
 
     ros::Publisher gripper_pub_;
-    ros::Publisher torso_pub_;
     ros::Publisher pick_done_pub_;
-    ros::Publisher label_pick_pub_;
 
   private:
-    std::string pick_comm_topic_;
     std::string pick_target_topic_;
 
     std::string pick_done_topic_;
 
-    trajectory_msgs::JointTrajectory gripper_close_value_;
+    std::vector<double> gripper_open_value_;
 
   private:
     void poseCallback(const project_msgs::LabeledCentroid::ConstPtr &msg);
@@ -77,11 +75,10 @@ class Pick
 
     // some assistance vars
     std::string ref_frame_;
-    Eigen::Vector3d target_position_;
+    geometry_msgs::Point target_position_;
     double target_orientation_;
     std::vector<double> transport_value_;
     geometry_msgs::Pose retreat_pose_;
-    geometry_msgs::Pose transport_pose_;
 
   /* MoveIt */
   private:

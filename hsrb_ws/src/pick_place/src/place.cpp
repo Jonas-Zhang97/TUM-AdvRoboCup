@@ -7,35 +7,32 @@ bool Place::init()
 
   place_target_sub_ = nh_.subscribe(place_target_topic_, 1, &Place::poseCallback, this);
 
-  torso_pub_ = nh_.advertise<trajectory_msgs::JointTrajectory>("/torso_controller/command", 1);
   place_done_pub_ = nh_.advertise<std_msgs::Bool>(place_done_topic_, 1);
-  gripper_pub_ = nh_.advertise<trajectory_msgs::JointTrajectory>("/gripper_controller/command", 1);
-  move_base_pub_ = nh_.advertise<geometry_msgs::Twist>("/mobile_base_controller/cmd_vel", 1);
+  gripper_pub_ = nh_.advertise<tmc_control_msgs::GripperApplyEffortActionGoal>("/hsrb/gripper_controller/apply_force/goal", 10);
 
   command_ = false;
   place_done_.data = true;
 
-  arm_home_value_ = {0.15, 0.19, -1.34, -0.19, 1.94, -1.57, 1.36, 0};
+  arm_home_value_ = {0.0, 0.0, -1.57, -1.57, 0.0, 0.0};
 
-  gripper_open_value_.joint_names.resize(2);
-  gripper_open_value_.joint_names[0] = "gripper_left_finger_joint";
-  gripper_open_value_.joint_names[1] = "gripper_right_finger_joint";
+  gripper_close_value_.joint_names.resize(1);
+  gripper_close_value_.joint_names[0] = "hand_motor_joint";
 
-  gripper_open_value_.points.resize(1);
-  gripper_open_value_.points[0].positions.resize(2);
-  gripper_open_value_.points[0].positions[0] = 1;
-  gripper_open_value_.points[0].positions[1] = 1;
-  gripper_open_value_.points[0].time_from_start = ros::Duration(1.0);
+  gripper_close_value_.points.resize(1);
+  gripper_close_value_.points[0].positions.resize(1);
+  gripper_close_value_.points[0].positions[0] = 0.0174;
+  gripper_close_value_.points[0].time_from_start = ros::Duration(1.0);
 
-  ref_frame_ = "base_footprint";
+  ref_frame_ = "odom";
 
-  arm_torso_group.setPlannerId("RRTConnectkConfigDefault");
-  arm_torso_group.setPlanningTime(30.0);
-  arm_torso_group.setMaxAccelerationScalingFactor(0.2);
-  arm_torso_group.setMaxVelocityScalingFactor(0.2);
-  arm_torso_group.setEndEffectorLink("arm_tool_link");
+  whole_body_grp.setPlannerId("RRTConnectkConfigDefault");
+  whole_body_grp.setPlanningTime(10.0);
+  whole_body_grp.setMaxAccelerationScalingFactor(0.1);
+  whole_body_grp.setMaxVelocityScalingFactor(0.1);
+  whole_body_grp.allowReplanning(true);
+  whole_body_grp.setNumPlanningAttempts(10);
 
-  counter_ = 0;
+  ROS_INFO_STREAM("Place Node Initialized!");
 
   return true;
 }
@@ -62,167 +59,132 @@ void Place::update()
 
 void Place::place()
 {
-  if (lower_torso_)
-  {
-    lowerTorso();
-  }
+  computeTargetOrientation();
   prePlaceApproach();
   toPlacePose();
   openGripper();
   postPlaceRetreat();
   homing();
-  if (counter_ >= 3)
-  {
-    higherTorso();
-  }
 }
 
-void Place::lowerTorso()
+void Place::computeTargetOrientation()
 {
-  trajectory_msgs::JointTrajectory torso_lower_value;
+  geometry_msgs::Point current_base_position;
+  current_base_position = whole_body_grp.getCurrentPose("base_link").pose.position;
+  geometry_msgs::Vector3 vec;
+  vec.x = target_position_.x - current_base_position.x;
+  vec.y = target_position_.y - current_base_position.y;
+  vec.z = target_position_.z - current_base_position.z;
 
-  torso_lower_value.joint_names.resize(1);
-  torso_lower_value.joint_names[0] = "torso_lift_joint";
-
-  torso_lower_value.points.resize(1);
-  torso_lower_value.points[0].positions.resize(1);
-  torso_lower_value.points[0].positions[0] = 0.1;
-  torso_lower_value.points[0].time_from_start = ros::Duration(1.0);
-
-  torso_pub_.publish(torso_lower_value);
-  ros::Duration(5.0).sleep();
+  target_orientation_ = atan2(vec.y, vec.x);
 }
 
 void Place::prePlaceApproach()
 {
-  arm_torso_group.setPoseTarget(pre_approach_pose_);
-  bool succ = (arm_torso_group.plan(arm_plan_) == moveit_msgs::MoveItErrorCodes::SUCCESS);
+  geometry_msgs::PoseStamped pre_approach_pose;
+  pre_approach_pose.header.frame_id = ref_frame_;
+  pre_approach_pose.pose.position = target_position_;
+  pre_approach_pose.pose.position.x -= 0.18 * cos(target_orientation_);
+  pre_approach_pose.pose.position.y -= 0.18 * sin(target_orientation_);
+  pre_approach_pose.pose.position.z += 0.1;
+
+  tf2::Quaternion quaternion;
+  quaternion.setRPY(-1.57, -1.57, target_orientation_ - 1.57);
+  pre_approach_pose.pose.orientation = tf2::toMsg(quaternion);
+
+  whole_body_grp.setPoseTarget(pre_approach_pose);
+  bool succ = (whole_body_grp.plan(whole_body_plan_) == moveit_msgs::MoveItErrorCodes::SUCCESS);
 
   if (!succ)
   {
     ROS_INFO_STREAM("Planning failed");
   }
 
-  arm_torso_group.move();
+  whole_body_grp.move();
 
   ROS_INFO_STREAM("Pre-place goal reached");
 }
 
 void Place::toPlacePose()
 {
-  place_pose_ = pre_approach_pose_.pose;
-  place_pose_.position.x += 0.28;
+  geometry_msgs::Pose place_pose;
+  place_pose.position = target_position_;
+  place_pose.position.x -= 0.03 * cos(target_orientation_);
+  place_pose.position.y -= 0.03 * sin(target_orientation_);
+
+  tf2::Quaternion quaternion;
+  quaternion.setRPY(-1.57, -1.57, target_orientation_ - 1.57);
+  place_pose.orientation = tf2::toMsg(quaternion);
 
   std::vector<geometry_msgs::Pose> waypoints;
-  waypoints.push_back(place_pose_);
+  waypoints.push_back(place_pose);
 
   moveit_msgs::RobotTrajectory trajectory;
 
   double eef_step = 0.01;  // Resolution of the Cartesian path
   double jump_threshold = 0.0;  // No jump threshold
 
-  double fraction = arm_torso_group.computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory);
+  double fraction = whole_body_grp.computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory);
 
-  arm_torso_group.execute(trajectory);
+  whole_body_grp.execute(trajectory);
 }
 
 void Place::openGripper()
 {
-  gripper_pub_.publish(gripper_open_value_);
-  ros::Duration(1.0).sleep();
+  tmc_control_msgs::GripperApplyEffortActionGoal open_goal;
+  open_goal.goal.effort = -1;
+  gripper_pub_.publish(open_goal);
+  ros::Duration(0.5).sleep();
 }
 
 void Place::postPlaceRetreat()
 {
-  retreat_pose_ = place_pose_;
-  retreat_pose_.position.z += 0.05;
+  geometry_msgs::Pose post_place_pose_1;
+  post_place_pose_1.position = target_position_;
+  post_place_pose_1.position.x -= 0.03 * cos(target_orientation_);
+  post_place_pose_1.position.y -= 0.03 * sin(target_orientation_);
+  post_place_pose_1.position.z += 0.1;
 
-  geometry_msgs::Pose retreat_pose_1;
-  retreat_pose_1 = retreat_pose_;
-  retreat_pose_1.position.x -= 0.28;
+  tf2::Quaternion quaternion;
+  quaternion.setRPY(-1.57, -1.57, target_orientation_ - 1.57);
+  post_place_pose_1.orientation = tf2::toMsg(quaternion);
+
+  geometry_msgs::Pose post_place_pose_2;
+  post_place_pose_2.position = target_position_;
+  post_place_pose_2.position.x -= 0.2 * cos(target_orientation_);
+  post_place_pose_2.position.y -= 0.2 * sin(target_orientation_);
+  post_place_pose_2.position.z += 0.1;
+
+  post_place_pose_2.orientation = tf2::toMsg(quaternion);
 
   std::vector<geometry_msgs::Pose> waypoints;
-  waypoints.push_back(retreat_pose_);
-  waypoints.push_back(retreat_pose_1);
+  waypoints.push_back(post_place_pose_1);
+  waypoints.push_back(post_place_pose_2);
 
   moveit_msgs::RobotTrajectory trajectory;
 
   double eef_step = 0.01;  // Resolution of the Cartesian path
   double jump_threshold = 0.0;  // No jump threshold
 
-  double fraction = arm_torso_group.computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory);
+  double fraction = whole_body_grp.computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory);
 
-  arm_torso_group.execute(trajectory);
+  whole_body_grp.execute(trajectory);
 }
 
 void Place::homing()
 {
-  // For safty when tucking the arm, retreat the base
-  ros::Time start_time = ros::Time::now();
-  ros::Duration timeout(2.0); // Timeout of 2 seconds
-  while (ros::Time::now() - start_time < timeout)
-  {
-    geometry_msgs::Twist move_base_retreat;
+  arm_grp.setJointValueTarget(arm_home_value_);
+  arm_grp.plan(arm_plan_);
+  arm_grp.move();
 
-    // Here you build your twist message
-    move_base_retreat.linear.x = -0.2;
-    move_base_retreat.linear.y = 0.0;
-    move_base_retreat.linear.z = 0.0;
-
-    move_base_retreat.angular.x = 0.0;
-    move_base_retreat.angular.y = 0.0;
-    move_base_retreat.angular.z = 0.3;
-
-    move_base_pub_.publish(move_base_retreat);
-  }
-
-  // Tuck the arm
-  std::system("rosrun tiago_gazebo tuck_arm.py");
-}
-
-void Place::higherTorso()
-{
-  // higher the torso for a better view at kitchen
-  trajectory_msgs::JointTrajectory torso_higher_value;
-
-  torso_higher_value.joint_names.resize(1);
-  torso_higher_value.joint_names[0] = "torso_lift_joint";
-
-  torso_higher_value.points.resize(1);
-  torso_higher_value.points[0].positions.resize(1);
-  torso_higher_value.points[0].positions[0] = 0.25;
-  torso_higher_value.points[0].time_from_start = ros::Duration(1.0);
-
-  torso_pub_.publish(torso_higher_value);
-  ros::Duration(5.0).sleep();
+  ROS_INFO_STREAM("homed");
 }
 
 void Place::poseCallback(const geometry_msgs::PoseStamped::ConstPtr &msg)
 {
   command_ = true;
 
-  target_position_ << msg->pose.position.x,
-               msg->pose.position.y,
-               msg->pose.position.z;
+  target_position_ = msg->pose.position;
 
-  pre_approach_pose_.header.frame_id = ref_frame_;
-  pre_approach_pose_.pose.position = msg->pose.position;
-
-  pre_approach_pose_.pose.position.x -= 0.415;
-  pre_approach_pose_.pose.position.z += 0.02;
-
-  if (msg -> pose.position.z < 0.8)
-  {
-    lower_torso_ = true;
-  }
-
-  tf2::Quaternion quaternion;
-  quaternion.setRPY(1.57, 0.0, 0.0);
-
-  pre_approach_pose_.pose.orientation = tf2::toMsg(quaternion);
-  
-  ROS_INFO_STREAM("Command received, position: " << target_position_.transpose());
-
-  // After 3 place, higher the torso
-  counter_ += 1;
+  ROS_INFO_STREAM("Command received, position: " << target_position_);
 }
