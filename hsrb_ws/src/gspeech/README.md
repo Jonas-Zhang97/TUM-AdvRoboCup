@@ -42,3 +42,24 @@ To check what returns from speech recognition module:
 rostopic echo /gspeech/speech
 ```
 
+
+
+Some dependencies have to be install, the following installation is for ros 18.04 and python2, not tested yet, do NOT add directly to the dockerfile:
+
+```dockerfile
+RUN sudo apt install -y portaudio19-dev \
+    && pip install --upgrade "pip<21.0" \
+    && pip install --upgrade wheel \
+    && pip install pyaudio==0.2.9 \
+    && pip install "pyasn1>=0.4.6,<0.6.0" \
+    && pip install "six>=1.13.0" \
+    && pip install google-cloud==0.22.0 \
+    && pip install google-cloud-speech \
+    && pip install requests \
+    && sudo apt install -y \
+        ros-kinetic-audio-common \
+        alsa-base alsa-utils \
+        gstreamer1.0-tools gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly\
+        sox   
+```
+
