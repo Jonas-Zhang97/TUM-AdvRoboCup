@@ -183,7 +183,6 @@ void Place::poseCallback(const geometry_msgs::PoseStamped::ConstPtr &msg)
   command_ = true;
 
   target_position_ = msg->pose.position;
-  target_orientation_ = atan2(target_position_.y, target_position_.x);
 
   ROS_INFO_STREAM("Command received, position: " << target_position_);
 }

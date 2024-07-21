@@ -231,16 +231,5 @@ void Pick::poseCallback(const project_msgs::LabeledCentroid::ConstPtr &msg)
 
   target_position_ = msg->pose.pose.position;
 
-  // pre_approach_pose_.header.frame_id = ref_frame_;
-  // pre_approach_pose_.pose.position = msg->pose.pose.position;
-
-  // pre_approach_pose_.pose.position.x -= 0.415;    // Length of the gripper = 0.215
-  // pre_approach_pose_.pose.position.z += 0.02;
-
-  // tf2::Quaternion quaternion;
-  // quaternion.setRPY(3.14, 1.57, 0.0);
-
-  // pre_approach_pose_.pose.orientation = tf2::toMsg(quaternion);
-  
   ROS_INFO_STREAM("Command received, position: " << target_position_);
 }
