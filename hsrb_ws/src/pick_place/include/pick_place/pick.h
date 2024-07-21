@@ -11,6 +11,8 @@
 #include <project_msgs/LabeledCentroid.h>
 #include <moveit_msgs/CollisionObject.h>
 
+#include <tmc_control_msgs/GripperApplyEffortActionGoal.h>
+
 class Pick
 {
   private:
@@ -57,7 +59,7 @@ class Pick
 
     std::string pick_done_topic_;
 
-    trajectory_msgs::JointTrajectory gripper_close_value_;
+    std::vector<double> gripper_open_value_;
 
   private:
     void poseCallback(const project_msgs::LabeledCentroid::ConstPtr &msg);

@@ -8,12 +8,12 @@ bool Place::init()
   place_target_sub_ = nh_.subscribe(place_target_topic_, 1, &Place::poseCallback, this);
 
   place_done_pub_ = nh_.advertise<std_msgs::Bool>(place_done_topic_, 1);
-  gripper_pub_ = nh_.advertise<trajectory_msgs::JointTrajectory>("/gripper_controller/command", 1);
+  gripper_pub_ = nh_.advertise<tmc_control_msgs::GripperApplyEffortActionGoal>("/hsrb/gripper_controller/apply_force/goal", 10);
 
   command_ = false;
   place_done_.data = true;
 
-  arm_home_value_ = {0.0, 0.0, 0.0, 0.0, 0.0};
+  arm_home_value_ = {0.0, 0.0, -1.57, -1.57, 0.0, 0.0};
 
   gripper_close_value_.joint_names.resize(1);
   gripper_close_value_.joint_names[0] = "hand_motor_joint";
@@ -27,8 +27,8 @@ bool Place::init()
 
   whole_body_grp.setPlannerId("RRTConnectkConfigDefault");
   whole_body_grp.setPlanningTime(10.0);
-  whole_body_grp.setMaxAccelerationScalingFactor(0.3);
-  whole_body_grp.setMaxVelocityScalingFactor(0.3);
+  whole_body_grp.setMaxAccelerationScalingFactor(0.1);
+  whole_body_grp.setMaxVelocityScalingFactor(0.1);
   whole_body_grp.allowReplanning(true);
   whole_body_grp.setNumPlanningAttempts(10);
 
@@ -131,8 +131,10 @@ void Place::toPlacePose()
 
 void Place::openGripper()
 {
-  // gripper_pub_.publish(gripper_open_value_);
-  // ros::Duration(1.0).sleep();
+  tmc_control_msgs::GripperApplyEffortActionGoal open_goal;
+  open_goal.goal.effort = -1;
+  gripper_pub_.publish(open_goal);
+  ros::Duration(0.5).sleep();
 }
 
 void Place::postPlaceRetreat()

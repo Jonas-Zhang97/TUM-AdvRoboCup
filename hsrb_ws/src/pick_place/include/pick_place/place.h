@@ -8,6 +8,8 @@
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
+#include <tmc_control_msgs/GripperApplyEffortActionGoal.h>
+
 #include <std_msgs/Bool.h>
 
 class Place

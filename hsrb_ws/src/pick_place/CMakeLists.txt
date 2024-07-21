@@ -9,6 +9,8 @@ find_package(catkin REQUIRED COMPONENTS
   moveit_ros_planning_interface
   tf2_ros
   tf2_geometry_msgs
+  trajectory_msgs
+  controller_manager_msgs
   message_generation
   project_msgs
 )
@@ -27,6 +29,8 @@ catkin_package(
     tf2_geometry_msgs
     message_runtime
     geometry_msgs
+    controller_manager_msgs
+    tmc_control_msgs
   DEPENDS
     EIGEN3
 )

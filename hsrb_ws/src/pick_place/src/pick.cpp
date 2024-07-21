@@ -9,7 +9,7 @@ bool Pick::init()
   // Subscribers and publishers
   pick_target_sub_ = nh_.subscribe(pick_target_topic_, 1, &Pick::poseCallback, this);
 
-  gripper_pub_ = nh_.advertise<trajectory_msgs::JointTrajectory>("/gripper_controller/command", 1);
+  gripper_pub_ = nh_.advertise<tmc_control_msgs::GripperApplyEffortActionGoal>("/hsrb/gripper_controller/apply_force/goal", 10);
   pick_done_pub_ = nh_.advertise<std_msgs::Bool>(pick_done_topic_, 1);
 
   // Initialize flags
@@ -17,14 +17,8 @@ bool Pick::init()
   pick_done_.data = true;
   
   // Pre-defined poses
-  transport_value_ = {0.0, 0.0, 0.0, -1.57, 0.0, 0.0};
-  gripper_close_value_.joint_names.resize(1);
-  gripper_close_value_.joint_names[0] = "hand_motor_joint";
-
-  gripper_close_value_.points.resize(1);
-  gripper_close_value_.points[0].positions.resize(1);
-  gripper_close_value_.points[0].positions[0] = 0.0174;
-  gripper_close_value_.points[0].time_from_start = ros::Duration(1.0);
+  transport_value_ = {0.0, 0.0, -1.57, -1.57, 0.0, 0.0};
+  gripper_open_value_ = {0.8};
   
   // Set values for MoveIt
   ref_frame_ = "odom";
@@ -40,6 +34,7 @@ bool Pick::init()
 
   // Initialize HSRB
   // openGripper();
+  toTransportPose();
   ROS_INFO_STREAM("Pick Node Initialized!");
   return true;
 }
@@ -50,9 +45,7 @@ void Pick::update()
   {
     // Wait for 2 sec to update the planning scene
     ros::Duration(2.0).sleep();
-
-    // reset the joint value
-    
+  
     // Perform pick
     pick();
 
@@ -77,16 +70,9 @@ void Pick::pick()
   prePickApproach();
   openGripper();
   toPickPose();
+  closeGripper();
   postPickRetreat();
   toTransportPose();
-
-  /* legacy */
-  // openGripper();
-  // prePickApproach();
-  // toPickPose();
-  // closeGripper();
-  // postPickRetreat();
-  // toTransportPose();
 }
 
 void Pick::computeTargetOrientation()
@@ -131,15 +117,15 @@ void Pick::prePickApproach()
 
   whole_body_grp.move();
   ROS_INFO_STREAM("Pre-pick goal reached");
+  whole_body_grp.clearPathConstraints();
 }
 // 
 void Pick::openGripper()     // TODO: Implement this
 {
-//   std::vector<double> open_value = {-0.043};        // NOTE: set to default for testing
-//   gripper_group.setJointValueTarget(open_value);
-//   gripper_group.plan(gripper_plan_);
-//   gripper_group.move();
-//   ROS_INFO_STREAM("Gripper opened");
+  tmc_control_msgs::GripperApplyEffortActionGoal open_goal;
+  open_goal.goal.effort = -1;
+  gripper_pub_.publish(open_goal);
+  ros::Duration(0.5).sleep();
 }
 // 
 void Pick::toPickPose()
@@ -171,11 +157,13 @@ void Pick::toPickPose()
   ROS_INFO_STREAM("Arrived at: " << pick_pose.position);
 }
 // 
-// void Pick::closeGripper()
-// {
-//   gripper_pub_.publish(gripper_close_value_);
-//   ros::Duration(1.0).sleep();
-// }
+void Pick::closeGripper()
+{
+  tmc_control_msgs::GripperApplyEffortActionGoal open_goal;
+  open_goal.goal.effort = 5;
+  gripper_pub_.publish(open_goal);
+  ros::Duration(0.5).sleep();
+}
 //
 // 
 void Pick::postPickRetreat()

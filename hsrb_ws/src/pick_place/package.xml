@@ -36,16 +36,18 @@
 
   <test_depend>rosunit</test_depend>
 
-  <build_depend>geometry_msgs</build_depend>
+  <build_depend>geometry_msgs</build_depend>  
+  <build_depend>controller_manager_msgs</build_depend>
   <build_depend>message_generation</build_depend>
+  <build_depend>tmc_control_msgs</build_depend>
   
   <run_depend>geometry_msgs</run_depend>
   <run_depend>roscpp</run_depend>
   <run_depend>rospy</run_depend>
   <run_depend>message_runtime</run_depend>
   <run_depend>project_msgs</run_depend>
-
-
+  <run_depend>controller_manager_msgs</run_depend>
+  <run_depend>tmc_control_msgs</run_depend>
 
   <export>
   </export>
