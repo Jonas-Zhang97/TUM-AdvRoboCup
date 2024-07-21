@@ -9,13 +9,49 @@ from typing import List
 
 """
 Middle Flexible States:
-Navigation/ Look For/ Pick/ Place/Listen/ Audio Output/ 
+Navigation/ Look For/ Pick/ Place/Listen + Analyze/ Audio Output/ Follow
 Read from config in the future
 
 Fixed States:
-Start/ End/ Emergency Stop/ 
+Start/ End/ Emergency Stop/ waitForNewCmd
+
+Start: always at the beginning
+End: always at the end
+
+Listen and Analyze  can be combined into one state
 
 Listen: when the speech is recognized, 
+waitForNewCmd: include a position initialization
+
+-----------------------------------------------------------------------------------------------------------------------
+|      Previous State             |             Current State                |                 Next State              |
+-----------------------------------------------------------------------------------------------------------------------
+|         None                    |                 Start                    |                 Nav or Listen           |
+-----------------------------------------------------------------------------------------------------------------------
+|         Start or Audio Output  |                 Listen  + Analyze         |               Look For or Audio Output  |
+-----------------------------------------------------------------------------------------------------------------------
+|         Start or Pick           |                 Nav                    |Look For (object or pose or count) or Place|
+-----------------------------------------------------------------------------------------------------------------------
+|         Nav                     |                 Look For                  |        Pick or Listen or Place or Nav  |
+-----------------------------------------------------------------------------------------------------------------------
+|         Look For                |                 Pick                       |                     Nav               |
+-----------------------------------------------------------------------------------------------------------------------
+|         Nav                    |                 Place                      |                     End            `   |
+-----------------------------------------------------------------------------------------------------------------------
+|         Start or Nav             |      Listen + Analyze                     |                Audio Output           |
+-----------------------------------------------------------------------------------------------------------------------
+|         Listen + Analyze          |             Audio Output                 |                  Nav                  |
+-----------------------------------------------------------------------------------------------------------------------
+|         Nav                   |     Count(may be considered as Look for)   |                  Nav                  |
+-----------------------------------------------------------------------------------------------------------------------
+|Count(may be considered as Look for)|               Nav                      |                 Audio Output           |
+-----------------------------------------------------------------------------------------------------------------------
+|         Nav                     |                 Audio Output               |                  End                  |
+-----------------------------------------------------------------------------------------------------------------------
+|           Audio Output             |              Follow                     |                  End                   |
+-----------------------------------------------------------------------------------------------------------------------
+|     Place or Follow or Audio out |                 End                      |                  End                   |
+-----------------------------------------------------------------------------------------------------------------------
 """
 
 
@@ -34,6 +70,35 @@ class stateDescription:
     preRequisite: List[str] = field(default_factory=list)
     postRequisite: List[str] = field(default_factory=list)
 
+
+# TODO: read from config file
+start = stateDescription("start",
+                            ["None"],
+                            ["Nav", "Listen"])
+Nav = stateDescription("Nav",
+                            ["Start", "Pick", "Look For", "Audio Output", "Count"],
+                            ["Look For", "Place", "Audio Output"])
+LookFor = stateDescription("Look For",
+                            ["Nav"],
+                            ["Pick", "Listen", "Place", "Nav"])
+Pick = stateDescription("Pick",
+                            ["Look For"],
+                            ["Nav"])
+Place = stateDescription("Place",
+                            ["Nav", "Look For"],
+                            ["End"])
+Listen = stateDescription("Listen",
+                            ["Start", "Audio Output"],
+                            ["Look For", "Audio Output"])
+AudioOutput = stateDescription("Audio Output",
+                            ["Listen", "Nav", "Look For"],  # look for person
+                            ["Nav", "End"])
+Follow = stateDescription("Follow",
+                            [ "Audio Output"],
+                            ["End"])
+End = stateDescription("End",
+                            ["Place", "Follow", "Audio Output"],
+                            ["None"])
 
 
 
@@ -103,8 +168,8 @@ class endState(smach.State):
 
 
 
-
-
+# TODO: use get param to get the state list, where the state list is from GPT
+stateList = rospy.get_param('stateList')
 
 def stateOdering(stateList):
     """

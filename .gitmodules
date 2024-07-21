@@ -1,3 +1,6 @@
 [submodule "hsrb_ws/src/sam_for_pointcloud_segmentation"]
 	path = hsrb_ws/src/sam_for_pointcloud_segmentation
 	url = git@github.com:vvyric/sam_for_pointcloud_segmentation.git
+[submodule "hsrb_ws/src/state_machine/CompetitionTemplate"]
+	path = hsrb_ws/src/state_machine/CompetitionTemplate
+	url = https://github.com/johaq/CompetitionTemplate.git
