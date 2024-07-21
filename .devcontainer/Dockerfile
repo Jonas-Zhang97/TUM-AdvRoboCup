@@ -155,3 +155,5 @@ RUN sudo apt install -qqy lsof \
   net-tools\
   lshw\
   iputils-ping
+
+# TODO: pytorch, segment_anything, etc.
