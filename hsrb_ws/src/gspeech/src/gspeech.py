@@ -123,7 +123,7 @@ class GSpeech(object):
           }
 
           # Send request to Google Speech-to-Text API
-          url = 'https://speech.googleapis.com/v1/speech:recognize?key=AIzaSyDeaL201f7FDIdM07YVbB3gcYY2z8ZxexQ'
+          url = 'https://speech.googleapis.com/v1/speech:recognize?key={apikey}'# replace the apikey
           headers = {'Content-Type': 'application/json'}
           response = requests.post(url, headers=headers, data=json.dumps(payload))
 
