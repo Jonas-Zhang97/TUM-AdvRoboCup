@@ -133,6 +133,7 @@ void Place::openGripper()
 {
   tmc_control_msgs::GripperApplyEffortActionGoal open_goal;
   open_goal.goal.effort = -1;
+  open_goal.goal.do_control_stop = true;
   gripper_pub_.publish(open_goal);
   ros::Duration(0.5).sleep();
 }
