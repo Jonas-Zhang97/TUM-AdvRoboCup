@@ -230,10 +230,10 @@ class SamClipRos:
         seg_image = cv_image.copy()
         seg_image[segmentation_mask_image > 0] = [255,0,0]
         # visualize CLIP result
-        plt.imshow(seg_image)
-        plt.axis('off')
-        plt.show()
-        print('plot show here')
+        # plt.imshow(seg_image)
+        # plt.axis('off')
+        # plt.show()
+        # print('plot show here')
         exported_masks = self.maskprocessing(chosen_masks,True)
         self.Pub_mask(exported_masks)
 
