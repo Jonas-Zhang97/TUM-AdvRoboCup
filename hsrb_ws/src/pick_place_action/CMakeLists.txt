@@ -1,0 +1,70 @@
+cmake_minimum_required(VERSION 3.1.3)
+project(pick_place)
+
+find_package(catkin REQUIRED COMPONENTS
+  roscpp
+  std_msgs
+  moveit_core
+  moveit_ros_planning
+  moveit_ros_planning_interface
+  tf2_ros
+  tf2_geometry_msgs
+  trajectory_msgs
+  controller_manager_msgs
+  message_generation
+  project_msgs
+  actionlib_msgs
+)
+
+find_package(Eigen3 REQUIRED)
+find_package(Boost REQUIRED system filesystem date_time thread)
+
+# Generate actions in the 'action' folder
+add_action_files(
+  FILES
+  Pick.action
+  Place.action
+ )
+
+generate_messages(
+  DEPENDENCIES actionlib_msgs std_msgs geometry_msgs  # Or other packages containing msgs
+)
+
+catkin_package(
+  INCLUDE_DIRS include
+  LIBRARIES ${PROJECT_NAME}
+  CATKIN_DEPENDS 
+    roscpp 
+    std_msgs
+    moveit_core
+    moveit_ros_planning_interface
+    tf2_geometry_msgs
+    message_runtime
+    geometry_msgs
+    controller_manager_msgs
+    tmc_control_msgs
+    actionlib_msgs
+  DEPENDS
+    EIGEN3
+)
+
+
+include_directories(
+  include
+  ${catkin_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIR} 
+  ${EIGEN3_INCLUDE_DIRS}
+)
+
+add_executable(pick_server src/server/pick_server.cpp)
+add_executable(place_node src/server/place_node.cpp)
+
+add_library(pick src/pick.cpp)
+add_library(place src/place.cpp)
+
+
+target_link_libraries(pick_server pick)
+target_link_libraries(place_node place)
+
+target_link_libraries(pick ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(place ${catkin_LIBRARIES} ${Boost_LIBRARIES})
