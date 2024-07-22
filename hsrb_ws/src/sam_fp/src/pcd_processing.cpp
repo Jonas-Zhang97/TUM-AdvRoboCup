@@ -10,7 +10,7 @@ bool pcd_processing::initialize(ros::NodeHandle &nh) {
     masks_sub_ = nh.subscribe("/sam_mask", 1, &pcd_processing::masksCallback, this);
     objects_cloud_pub_ = nh.advertise<sensor_msgs::PointCloud2>("/objects_cloud", 1);
 
-    object_centers_pub_ = nh.advertise<geometry_msgs::PointStamped>("/object_centers", 1);
+    object_centers_pub_ = nh.advertise<project_msgs::LabeledCentroid>("/labeled_objects", 1);
 
     // Initialize pointers
     raw_cloud_.reset(new cloud);
@@ -46,7 +46,7 @@ void pcd_processing::update(const ros::Time &time) {
         objects_cloud_pub_.publish(cloudmsg_);
 
         // Calculate and publish the centroid of the objects cloud
-        geometry_msgs::PointStamped centroid = calculateCentroid(objects_cloud_, cloudmsg_.header);
+        project_msgs::LabeledCentroid centroid = calculateCentroid(objects_cloud_, cloudmsg_.header);
         object_centers_pub_.publish(centroid);
 
         // Reset the flag
@@ -55,13 +55,16 @@ void pcd_processing::update(const ros::Time &time) {
 }
 
 // Calculate centroid method
-geometry_msgs::PointStamped pcd_processing::calculateCentroid(const cloudPtr &cloud, const std_msgs::Header &header) {
+project_msgs::LabeledCentroid pcd_processing::calculateCentroid(const cloudPtr &cloud, const std_msgs::Header &header) {
     geometry_msgs::PointStamped centroid;
+    project_msgs::LabeledCentroid labeled_centroid;
     centroid.header = header;
 
     if (cloud->points.empty()) {
         ROS_WARN("The point cloud is empty, cannot calculate centroid.");
-        return centroid;
+        labeled_centroid.pose.pose.position = centroid.point;
+        labeled_centroid.label = 0;
+        return labeled_centroid;
     }
 
     Eigen::Vector4f centroid_eigen;
@@ -71,16 +74,23 @@ geometry_msgs::PointStamped pcd_processing::calculateCentroid(const cloudPtr &cl
     centroid.point.y = centroid_eigen[1];
     centroid.point.z = centroid_eigen[2];
 
+    
+
     // 转换质心到目标坐标框架
     std::string target_frame = "odom"; // 目标坐标框架，例如机器人底座坐标框架
     try {
         geometry_msgs::PointStamped transformed_centroid;
         tf_listener_.waitForTransform(target_frame, centroid.header.frame_id, ros::Time(0), ros::Duration(3.0));
         tf_listener_.transformPoint(target_frame, centroid, transformed_centroid);
-        return transformed_centroid;
+        
+        labeled_centroid.pose.pose.position = transformed_centroid.point;
+        labeled_centroid.label = 1;
+        return labeled_centroid;
     } catch (tf::TransformException &ex) {
         ROS_WARN("Failed to transform centroid: %s", ex.what());
-        return centroid; // 返回未转换的质心
+        labeled_centroid.pose.pose.position = centroid.point;
+        labeled_centroid.label = 0;
+        return labeled_centroid; // 返回未转换的质心
     }
     // return centroid;
 }

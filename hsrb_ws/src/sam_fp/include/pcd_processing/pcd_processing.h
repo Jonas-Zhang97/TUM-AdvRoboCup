@@ -41,6 +41,8 @@
 #include <pcl_ros/impl/transforms.hpp>
 #include <pcl/common/common.h>
 
+#include <project_msgs/LabeledCentroid.h>
+
 /**
 * @brief: Class pcd_processing: cut RGB-D point cloud using 2D-masks generated
 * by Segment Anything from Meta. 
@@ -63,7 +65,7 @@ public:
     typedef pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudPtr; // Cloud Pointer Type
 
     // Constructor and Destructor
-    pcd_processing(const std::string &topic = "/xtion/depth_registered/points",
+    pcd_processing(const std::string &topic = "/hsrb/head_rgbd_sensor/depth_registered/rectified_points",
                    const std::string &frame ="base_link"):
                    pointcloud_topic(topic),base_frame(frame),is_cloud_updated(false) {
 
@@ -134,7 +136,7 @@ private:
      */
     void masksCallback(const masks_msgs::maskID::Ptr &msg);
 
-    geometry_msgs::PointStamped calculateCentroid(const cloudPtr &cloud, const std_msgs::Header &header);
+    project_msgs::LabeledCentroid calculateCentroid(const cloudPtr &cloud, const std_msgs::Header &header);
 
 
     int countOnes(const Eigen::Matrix<int64_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> &matrix); 
