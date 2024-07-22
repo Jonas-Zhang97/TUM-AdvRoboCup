@@ -22,3 +22,5 @@ hsrb_ws/src/hsrb_*_devel
 hsrb_ws/src/moveit*hsrb_ws/=1.21.6
 hsrb_ws/=3.20.2
 hsrb_ws/=1.21.6
+
+checkpoints/
