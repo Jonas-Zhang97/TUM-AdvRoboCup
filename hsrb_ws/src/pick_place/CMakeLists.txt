@@ -13,10 +13,22 @@ find_package(catkin REQUIRED COMPONENTS
   controller_manager_msgs
   message_generation
   project_msgs
+  actionlib_msgs
 )
 
 find_package(Eigen3 REQUIRED)
 find_package(Boost REQUIRED system filesystem date_time thread)
+
+# Generate actions in the 'action' folder
+add_action_files(
+  FILES
+  Pick.action
+  Place.action
+ )
+
+generate_messages(
+  DEPENDENCIES actionlib_msgs std_msgs geometry_msgs  # Or other packages containing msgs
+)
 
 catkin_package(
   INCLUDE_DIRS include
@@ -31,6 +43,7 @@ catkin_package(
     geometry_msgs
     controller_manager_msgs
     tmc_control_msgs
+    actionlib_msgs
   DEPENDS
     EIGEN3
 )
