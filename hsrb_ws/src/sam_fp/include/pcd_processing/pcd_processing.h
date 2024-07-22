@@ -55,7 +55,7 @@ private:
     const std::string pointcloud_topic;
     const std::string base_frame;
     bool is_cloud_updated;                      //!< new pointcloud recieved
-    
+    bool centroid_published_; 
 
 public:
     
