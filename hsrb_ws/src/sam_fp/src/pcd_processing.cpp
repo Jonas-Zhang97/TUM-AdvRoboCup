@@ -17,6 +17,9 @@ bool pcd_processing::initialize(ros::NodeHandle &nh) {
     preprocessed_cloud_.reset(new cloud);
     objects_cloud_.reset(new cloud);
     latest_maskID_msg_.reset(new masks_msgs::maskID);
+
+    centroid_published_ = false;
+
     return true; // Return true if initialization is successful
 }
 
@@ -24,7 +27,7 @@ bool pcd_processing::initialize(ros::NodeHandle &nh) {
 void pcd_processing::update(const ros::Time &time) {
     // Update the pcd_processing object
 
-    if (is_cloud_updated) {
+    if (is_cloud_updated && !centroid_published_) {
         // Preprocess the raw cloud
         if(!raw_cloud_preprocessing(raw_cloud_, preprocessed_cloud_)) {
             ROS_ERROR("Raw cloud preprocessing failed!");
@@ -48,6 +51,8 @@ void pcd_processing::update(const ros::Time &time) {
         // Calculate and publish the centroid of the objects cloud
         project_msgs::LabeledCentroid centroid = calculateCentroid(objects_cloud_, cloudmsg_.header);
         object_centers_pub_.publish(centroid);
+
+        centroid_published_ = true;
 
         // Reset the flag
         is_cloud_updated = false;
