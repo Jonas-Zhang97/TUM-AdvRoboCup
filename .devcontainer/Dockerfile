@@ -1,6 +1,6 @@
 ##### Base Stage #####
 
-FROM nvidia/cuda:12.2.2-devel-ubuntu20.04 as base
+FROM nvidia/cuda:11.0.3-cudnn8-devel-ubuntu20.04 as base
 
 LABEL MAINTAINER="yueyang.zhang@tum.de"
 
