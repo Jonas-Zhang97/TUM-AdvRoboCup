@@ -20,7 +20,7 @@ import sys
 class SamClipRos:
     def __init__(self):
         rospy.init_node('samros', anonymous=True)
-        self.image_topic = rospy.get_param('image_topic', '/hsrb/head_l_stereo_camera/image_raw') #/hsrb/head_center_camera/image_raw #/hsrb/head_l_stereo_camera/image_raw #/xtion/rgb/image_raw# Default is image_raw topic of Tiago robot
+        self.image_topic = rospy.get_param('image_topic', '/hsrb/head_center_camera/image_raw') #/xtion/rgb/image_raw# Default is image_raw topic of Tiago robot
         self.pub = rospy.Publisher('/sam_mask',maskID, queue_size=1000) #TODO: pub np.ndarray related func: maskprocessing() and Pub_mask()
         self.sub = rospy.Subscriber(self.image_topic, SensorImage, self.callback) # TODO: find image topic from Tiago!
         self.cropped_boxes = []
@@ -57,7 +57,7 @@ class SamClipRos:
         rospy.logwarn(os.getcwd())
         for path in sys.path:
             rospy.loginfo(path)
-        sam_checkpoint = "/workspaces/adv_robocup/hsrb_ws/checkponits/sam_vit_h_4b8939.pth"
+        sam_checkpoint = "/workspaces/adv_robocup/ckpt/sam_vit_h_4b8939.pth"
         model_type = "vit_h"
 
         device = "cuda"
