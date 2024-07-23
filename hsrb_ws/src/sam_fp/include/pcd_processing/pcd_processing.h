@@ -42,6 +42,8 @@
 #include <pcl/common/common.h>
 
 #include <project_msgs/LabeledCentroid.h>
+#include <actionlib/server/simple_action_server.h>
+#include <project_msgs/CalculateCentroidAction.h>
 
 /**
 * @brief: Class pcd_processing: cut RGB-D point cloud using 2D-masks generated
@@ -162,6 +164,17 @@ private:
 
     // Transformation
     tf::TransformListener tf_listener_;          //!< Access ros tf tree to get frame transformations
+    
+    // Action Server
+    typedef actionlib::SimpleActionServer<project_msgs::CalculateCentroidAction> CentroidActionServer;
+    std::shared_ptr<CentroidActionServer> as_;
+    std::string action_name_;
+    
+    // Callback function for action server
+    void executeCB(const project_msgs::CalculateCentroidGoalConstPtr &goal);
+
+    // Method to calculate centroid
+    geometry_msgs::Point calculateCentroidAction(const sensor_msgs::PointCloud2 &point_cloud);
 };
 
 
