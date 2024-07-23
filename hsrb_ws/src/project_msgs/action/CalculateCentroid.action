@@ -1,0 +1,8 @@
+# Goal
+sensor_msgs/PointCloud2 point_cloud
+---
+# Result
+geometry_msgs/Point centroid
+---
+# Feedback
+geometry_msgs/Point current_estimate
