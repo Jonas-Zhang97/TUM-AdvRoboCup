@@ -77,7 +77,7 @@ class EnvDetection:
     self.has_room_name = True
 
   def command_callback(self, command):
-    self.has_command = True
+    self.has_command = command.data
 
 if __name__ == '__main__':
   rospy.init_node('env_detection')
