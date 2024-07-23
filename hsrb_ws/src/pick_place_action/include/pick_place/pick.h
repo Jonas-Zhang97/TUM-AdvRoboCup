@@ -23,27 +23,11 @@ class Pick
     moveit::planning_interface::MoveGroupInterface arm_grp;
     moveit::planning_interface::MoveGroupInterface gripper_grp;
 
-  /* ROS Communication */
-  protected:
-    ros::NodeHandle nh_;
-    actionlib::SimpleActionServer<pick_place::PickAction> pick_as_;
-    std::string action_name_;
-    pick_place::PickFeedback pick_fdbk_;
-    pick_place::PickResult pick_res_;
-
   public:
     Pick():
       whole_body_grp("whole_body"), 
       arm_grp("arm"), 
-      gripper_grp("gripper"), 
-      pick_as_(nh_, "pick_action", boost::bind(&Pick::executeCB, this, _1), false), 
-      action_name_("pick_action")
-    {
-      pick_as_.start();
-    } 
-    ~Pick(void)
-    {};
-
+      gripper_grp("gripper"), {}
   public:
     bool init();
     void update();
@@ -104,5 +88,28 @@ class Pick
     std::vector<std::string> object_names_;
 
 };
+
+class MoveitPickAction
+{
+  /* ROS Communication */
+  protected:
+    ros::NodeHandle nh_;
+    actionlib::SimpleActionServer<pick_place::MoveitPickAction> moveit_pick_as_;
+    std::string action_name_;
+    pick_place::PickFeedback pick_fdbk_;
+    pick_place::PickResult pick_res_;
+
+  public:
+    MoveitPickAction():
+      move_pick_as_(nh_, name, boost::bind(&Pick::executeCB, this, _1), false), 
+      action_name_(name)
+      {
+        pick_as_.start();
+      } 
+    ~MoveitPickAction(void)
+    {
+    };
+    
+}
 
 #endif
