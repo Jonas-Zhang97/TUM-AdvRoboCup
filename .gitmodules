@@ -9,3 +9,7 @@
 	path = hsrb_ws/src/ultralytics_ros
 	url = git@github.com:Alpaca-zip/ultralytics_ros.git
 	branch = noetic-devel
+[submodule "hsrb_ws/src/RoboCup-Restaurant"]
+	path = hsrb_ws/src/RoboCup-Restaurant
+	url = git@github.com:Jonas-Zhang97/RoboCup-Restaurant.git
+	branch = main

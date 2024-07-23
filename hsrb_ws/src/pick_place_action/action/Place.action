@@ -1,8 +1,0 @@
-#goal definition
-geometry_msgs/Point target_pose
----
-#result definition
-bool completed_flag
----
-#feedback
-string current_stage
