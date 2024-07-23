@@ -1,0 +1,11 @@
+<launch>
+  <!-- Launch gui_chatgpt.py -->
+  <node name="gui_chatgpt" pkg="wpr_chatgpt" type="gui_chatgpt.py" output="screen">
+    <!-- Add any arguments or parameters specific to gui_chatgpt.py here -->
+  </node>
+
+  <!-- Launch openai_ros_obj.py -->
+  <node name="openai_ros_obj" pkg="wpr_chatgpt" type="openai_ros_obj.py" output="screen">
+    <!-- Add any arguments or parameters specific to openai_ros_obj.py here -->
+  </node>
+</launch>
