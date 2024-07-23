@@ -120,8 +120,8 @@ class stateMachineGenerator(smach.State):
      """
 
     def __init__(self, state_description):
-        self.lpreRequsite = state_description.preRequisite
-        self.lpostRequsite = state_description.preRequisite
+        self.lpreRequsite = ['a'] #state_description.preRequisite
+        self.lpostRequsite = ['b'] # state_description.preRequisite
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
 
     def check_pre_requisite(self):
@@ -172,7 +172,7 @@ class endState(smach.State):
 
 
 # TODO: use get param to get the state list, where the state list is from GPT
-stateList = rospy.get_param('stateList')
+# stateList = rospy.get_param('stateList')
 
 
 def stateOdering(stateList):  #TODO
@@ -239,28 +239,28 @@ def main():
             """
             nav -> look for(check the environment) -> once find different -> pick -> nav -> place
             """
-            regular_routine = smach.Sequence(outcomes=['done'],  # FIXME: sequence? Normal?
-                                             connecter_outcome='done')
+            regular_routine = smach.Sequence(outcomes=['done','failed'], connector_outcome='succeeded')
+                                                                        
 
             with regular_routine:
-                smach.Sequence.add('Nav', STATE_A)  # TODO: change to the real state
+                smach.Sequence.add('Nav1', STATE_A)  # TODO: change to the real state
                 smach.Sequence.add('Look For', STATE_B)
                 smach.Sequence.add('Pick', STATE_C)
-                smach.Sequence.add('Nav', STATE_D)
+                smach.Sequence.add('Nav2', STATE_D)
                 smach.Sequence.add('Place', STATE_E)
 
             # Problem handling branch
             problem_handling = smach.StateMachine(outcomes=['done'])
 
             with problem_handling:
-                smach.StateMachine.add('Nav', STATE_A,  # TODO: change to the real state
-                                       transitions={'done': 'Pick'})
+                smach.StateMachine.add('Nav3', STATE_A,  # TODO: change to the real state
+                                       transitions={'succeeded': 'Pick'})
                 smach.StateMachine.add('Pick', STATE_B,  # TODO: change to the real state
-                                       transitions={'done': 'Nav'})
-                smach.StateMachine.add('Nav', STATE_C,  # TODO: change to the real state
-                                       transitions={'done': 'Place'})
+                                       transitions={'succeeded': 'Nav4'})
+                smach.StateMachine.add('Nav4', STATE_C,  # TODO: change to the real state
+                                       transitions={'succeeded': 'Place'})
                 smach.StateMachine.add('Place', STATE_D,  # TODO: change to the real state
-                                       transitions={'done': 'done'})
+                                       transitions={'succeeded': 'done'})
 
             # Concurrence container to manage regular routine and problem detection
             patrol_con = smach.Concurrence(outcomes=['regular_done', 'problem_detected'],
@@ -286,14 +286,14 @@ def main():
             """
             listen or look for(waving hands) -> nav -> listen -> audio output -> nav -> pick or follow -> nav -> place -> end
             """
-            smach.StateMachine.add('Nav', STATE_A,  # TODO: change to the real state
-                                   transitions={'done': 'Pick'})
+            smach.StateMachine.add('Nav5', STATE_A,  # TODO: change to the real state
+                                   transitions={'succeeded': 'Pick'})
             smach.StateMachine.add('Pick', STATE_B,  # TODO: change to the real state
-                                   transitions={'done': 'Nav'})
-            smach.StateMachine.add('Nav', STATE_C,  # TODO: change to the real state
-                                   transitions={'done': 'Place'})
+                                   transitions={'succeeded': 'Nav6'})
+            smach.StateMachine.add('Nav6', STATE_C,  # TODO: change to the real state
+                                   transitions={'succeeded': 'Place'})
             smach.StateMachine.add('Place', STATE_D,  # TODO: change to the real state
-                                   transitions={'done': 'done'})
+                                   transitions={'succeeded': 'done'})
 
             # for sub-states
             # TODO: change the state above in to the format below
@@ -361,19 +361,20 @@ def main():
 
 
 if __name__ == "__main__":
-    stateA = stateDescription("stateA",
-                              ["a", "b", "c"],
-                              ["d", "e", "f"])
-    print('stateA', stateA)
-    print('stateA.stateName', stateA.stateName)
-    print('stateA.preRequisite', stateA.preRequisite)
-    print('stateA.postRequisite', stateA.postRequisite)
+    main()
+    # stateA = stateDescription("stateA",
+    #                           ["a", "b", "c"],
+    #                           ["d", "e", "f"])
+    # print('stateA', stateA)
+    # print('stateA.stateName', stateA.stateName)
+    # print('stateA.preRequisite', stateA.preRequisite)
+    # print('stateA.postRequisite', stateA.postRequisite)
 
-    stateB = stateDescription("stateB",
-                              ["a", "b", "c"],
-                              ["d", "e", "f"])
+    # stateB = stateDescription("stateB",
+    #                           ["a", "b", "c"],
+    #                           ["d", "e", "f"])
 
-    test = [stateA, stateB]
-    print('test', test)
-    print('test[0]', test[0])
-    print('test[1]', test[1])
+    # test = [stateA, stateB]
+    # print('test', test)
+    # print('test[0]', test[0])
+    # print('test[1]', test[1])
