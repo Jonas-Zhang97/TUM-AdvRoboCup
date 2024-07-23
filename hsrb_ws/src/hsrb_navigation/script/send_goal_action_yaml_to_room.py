@@ -13,6 +13,7 @@ from tf import transformations
 from tmc_msgs.msg import RoomIdentifier
 
 from std_msgs.msg import String
+from actionlib_msgs.msg import GoalStatus
 
 def load_goals(filename):
     with open(filename, 'r') as file:
@@ -59,13 +60,15 @@ if __name__ == '__main__':
             client.send_goal(goal)
 
             finished = client.wait_for_result()
-            if finished:
+            # if finished:
+            state = client.get_state()
+            if state == GoalStatus.SUCCEEDED:
                 rospy.loginfo(f"Goal {goal_data['name']} reached successfully.")
                 room_identifier_msg = RoomIdentifier()
-                room_identifier_msg.room_name = goal_data['name']
+                room_identifier_msg.name = goal_data['name']
                 room_identifier_publisher.publish(room_identifier_msg)
                 navigation_status_publisher.publish("reached")
-                
+
             else:
                 rospy.logwarn(f"Failed to reach goal {goal_data['name']}.")
                 navigation_status_publisher.publish("failed")
