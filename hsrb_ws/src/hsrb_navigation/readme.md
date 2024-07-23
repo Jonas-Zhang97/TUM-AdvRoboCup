@@ -10,8 +10,7 @@ $ rviz -d $(rospack find hsrb_rosnav_config)/launch/hsrb.rviz
 rosrun rviz rviz  -d `rospack find hsrb_common_launch`/config/hsrb_display_full_hsrb.rviz
 
 $ roslaunch hsrb_navigation hsrb_nav_ics.launch map_file:=/workspaces/adv_robocup/hsrb_ws/src/hsrb_navigation/map/map.yaml
-
-rosrun tf tf_echo /map /base_link
+roslaunch hsrb_navigation hsrb_nav_ics.launch map_file:=/home/athome24-3/cup/hsrb_ws/src/hsrb_navigation/map/map.yaml
 可以使用 tf_echo 命令直接查看机器人在 /map 坐标系下的位置和姿态
 ##  Initialization of odometry
 roslaunch hsrb_navigation amcl.launch

@@ -4,7 +4,7 @@
 #include <ros/ros.h>
 #include <ros/console.h>
 #include <image_transport/image_transport.h>
-#include <cv_bridge/cv_bridge.h>
+
 #include <sensor_msgs/image_encodings.h>
 #include <std_msgs/Char.h>
 #include <algorithm>
@@ -51,9 +51,8 @@
 * 
 *
 */
-class pcd_processing
-{
-private:
+class pcd_processing_base {
+protected:
     const std::string pointcloud_topic;
     const std::string base_frame;
     bool is_cloud_updated;                      //!< new pointcloud recieved
@@ -62,18 +61,18 @@ private:
 public:
     
     // Alias:
-    typedef pcl::PointXYZRGB point;             // Point Type (vector type)
-    typedef pcl::PointCloud<pcl::PointXYZRGB> cloud;       // PointCloud Type (cloud vector type)
-    typedef pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudPtr; // Cloud Pointer Type
+    typedef pcl::PointXYZRGB PointType;             // Point Type (vector type)
+    typedef pcl::PointCloud<PointType> CloudType;   // PointCloud Type (cloud vector type)
+    typedef pcl::PointCloud<PointType>::Ptr CloudPtr; // Cloud Pointer Type
 
     // Constructor and Destructor
-    pcd_processing(const std::string &topic = "/hsrb/head_rgbd_sensor/depth_registered/rectified_points",
+    pcd_processing_base(const std::string &topic = "/hsrb/head_rgbd_sensor/depth_registered/rectified_points",
                    const std::string &frame ="base_link"):
                    pointcloud_topic(topic),base_frame(frame),is_cloud_updated(false) {
 
                    } // Initialize and refer to topic and frame with default values. Initialize member variables, allocate resources, etc. 
     
-    ~pcd_processing(){
+    virtual ~pcd_processing_base(){
         // Empty destructor body
     } // Destructor
 
@@ -84,16 +83,16 @@ public:
      * @return true success
      * @return false failure
      */
-    bool initialize(ros::NodeHandle &nh);
+    virtual bool initialize(ros::NodeHandle &nh);
 
     /**
      * @brief called periodically, update the pcd_processing object
      * 
      * @param time 
      */
-    void update(const ros::Time &time);
+    virtual void update(const ros::Time &time);
 
-private:
+protected:
     struct singlemask {
         Eigen::Matrix<int64_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> segmentation;
         int area;
@@ -111,7 +110,7 @@ private:
      * @return true success
      * @return false failure
      */
-    bool raw_cloud_preprocessing(cloudPtr &input, cloudPtr &output);
+    bool raw_cloud_preprocessing(CloudPtr &input, CloudPtr &output);
 
     /**
      * @brief cut the point cloud using masks generating from SAM
@@ -122,7 +121,7 @@ private:
      * @return true success
      * @return false failure
      */
-    bool cut_point_cloud(cloudPtr &input, const std::vector<singlemask> &masks, cloudPtr &objects);
+    bool cut_point_cloud(CloudPtr &input, const std::vector<singlemask> &masks, CloudPtr &objects);
 
     /**
      * @brief callback function for new pointcloud subscriber
@@ -138,7 +137,7 @@ private:
      */
     void masksCallback(const masks_msgs::maskID::Ptr &msg);
 
-    project_msgs::LabeledCentroid calculateCentroid(const cloudPtr &cloud, const std_msgs::Header &header);
+    project_msgs::LabeledCentroid calculateCentroid(const CloudPtr &cloud, const std_msgs::Header &header);
 
 
     int countOnes(const Eigen::Matrix<int64_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> &matrix); 
@@ -151,9 +150,9 @@ private:
     ros::Publisher objects_cloud_pub_;          //!< Publish objects point cloud
     ros::Publisher object_centers_pub_;   
     ros::Subscriber masks_sub_;                 //!< Subscriber to the masks data 
-    cloudPtr raw_cloud_ ;                       //!< Internal raw point cloud
-    cloudPtr preprocessed_cloud_;               //!< Internal preprocessed cloud     
-    cloudPtr objects_cloud_;                    //!< Internal objects point cloud
+    CloudPtr raw_cloud_ ;                       //!< Internal raw point cloud
+    CloudPtr preprocessed_cloud_;               //!< Internal preprocessed cloud     
+    CloudPtr objects_cloud_;                    //!< Internal objects point cloud
     masks_msgs::maskID::Ptr latest_maskID_msg_; //!< Internal latest maskID message
     sensor_msgs::PointCloud2 cloudmsg_; //!< save msg to cloudmsg_
     
@@ -164,18 +163,22 @@ private:
 
     // Transformation
     tf::TransformListener tf_listener_;          //!< Access ros tf tree to get frame transformations
-    
-    // Action Server
+};
+
+class pcd_processing : public pcd_processing_base {
+public:
+    pcd_processing(const std::string &topic = "/hsrb/head_rgbd_sensor/depth_registered/rectified_points",
+                   const std::string &frame ="base_link");
+
+    bool initialize(ros::NodeHandle &nh) override;
+
+private:
+    void executeCB(const project_msgs::CalculateCentroidGoalConstPtr &goal);
+    geometry_msgs::Point calculateCentroidAction(const sensor_msgs::PointCloud2 &point_cloud);
+
     typedef actionlib::SimpleActionServer<project_msgs::CalculateCentroidAction> CentroidActionServer;
     std::shared_ptr<CentroidActionServer> as_;
     std::string action_name_;
-    
-    // Callback function for action server
-    void executeCB(const project_msgs::CalculateCentroidGoalConstPtr &goal);
-
-    // Method to calculate centroid
-    geometry_msgs::Point calculateCentroidAction(const sensor_msgs::PointCloud2 &point_cloud);
 };
 
-
-#endif
+#endif // PCD_PROCESSING_CLASS_H
