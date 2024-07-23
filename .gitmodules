@@ -12,3 +12,4 @@
 [submodule "hsrb_ws/src/RoboCup-Restaurant"]
 	path = hsrb_ws/src/RoboCup-Restaurant
 	url = git@github.com:Jonas-Zhang97/RoboCup-Restaurant.git
+	branch = main
