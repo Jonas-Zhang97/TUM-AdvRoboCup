@@ -429,6 +429,7 @@ from dataclasses import dataclass, field
 from std_msgs.msg import String, Bool
 from typing import List
 
+
 # Define state description
 @dataclass
 class stateDescription:
@@ -479,19 +480,19 @@ End = stateDescription("End",
                        ["None"])
 
 # State machine generator class
-class stateMachineGenerator(smach.State):
-    def __init__(self, state_description):
-        self.lpreRequsite = state_description.preRequisite
-        self.lpostRequsite = state_description.postRequisite
-        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
-
-    def execute(self, userdata):
-        command = ["rosrun", "pkg", "node.py"]
-        process = subprocess.call(command)
-        if process == 0:
-            return 'succeeded'
-        else:
-            return 'failed'
+# class stateMachineGenerator(smach.State):
+#     def __init__(self, state_description):
+#         self.lpreRequsite = state_description.preRequisite
+#         self.lpostRequsite = state_description.postRequisite
+#         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+#
+#     def execute(self, userdata):
+#         command = ["rosrun", "pkg", "node.py"]
+#         process = subprocess.call(command)
+#         if process == 0:
+#             return 'succeeded'
+#         else:
+#             return 'failed'
 
 # Start state
 class startState(smach.State):
@@ -499,6 +500,7 @@ class startState(smach.State):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
         self.sD = stateDescription("startState", ["None"], ["NextState"])
 
+
     def execute(self, userdata):
         command = ["rosrun", "pkg", "node.py"]
         process = subprocess.call(command)
@@ -506,6 +508,79 @@ class startState(smach.State):
             return 'succeeded'
         else:
             return 'failed'
+
+class NavState(smach.State): # TODO
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+
+    def execute(self, userdata):
+        command = ["rosrun", "pkg", "node.py"]
+        process = subprocess.call(command)
+        if process == 0:
+            return 'succeeded'
+        else:
+            return 'failed'
+
+class LookForState(smach.State): # patrol # Done
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+
+    def execute(self, userdata):
+        env_detection_pub.publish(True)
+        bool = env_detection_error_cb
+        if bool:  # No problem publish true
+            return 'succeeded'
+        else:  # Problem detected publish false
+            return 'failed'
+
+class PickState(smach.State): # call SAM
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+
+    def execute(self, userdata):
+        command = ["rosrun", "pkg", "node.py"]
+        process = subprocess.call(command)
+        if process == 0:
+            return 'succeeded'
+        else:
+            return 'failed'
+
+class PlaceState(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+
+    def execute(self, userdata):
+        command = ["rosrun", "pkg", "node.py"]
+        process = subprocess.call(command)
+        if process == 0:
+            return 'succeeded'
+        else:
+            return 'failed'
+
+class ListenState(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+
+    def execute(self, userdata):
+        command = ["rosrun", "pkg", "node.py"]
+        process = subprocess.call(command)
+        if process == 0:
+            return 'succeeded'
+        else:
+            return 'failed'
+
+class AudioState(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+
+    def execute(self, userdata):
+        command = ["rosrun", "pkg", "node.py"]
+        process = subprocess.call(command)
+        if process == 0:
+            return 'succeeded'
+        else:
+            return 'failed'
+
 
 # End state
 class endState(smach.State):
@@ -545,6 +620,9 @@ def problem_solved_cb(userdata, msg):
 
 def emergency_cb(userdata, msg):
     return not msg.data  # Trigger emergency stop when msg.data is True
+
+def env_detection_error_cb(userdata, msg):
+    return msg.data
 
 # Main function
 def main():
@@ -596,7 +674,7 @@ def main():
                                            })
             with patrol_con:
                 smach.Concurrence.add('REGULAR_ROUTINE', regular_routine)
-                smach.Concurrence.add('MONITOR_PROBLEM', smach_ros.MonitorState('/problem_detection_topic', Bool, problem_detected_cb))
+                smach.Concurrence.add('MONITOR_PROBLEM', smach_ros.MonitorState('/env_detection_error', Bool, env_detection_error_cb))
 
             smach.StateMachine.add('PATROL_CON', patrol_con, transitions={'regular_done': 'patrol_sm_done', 'problem_detected': 'PROBLEM_HANDLING'})
             smach.StateMachine.add('PROBLEM_HANDLING', problem_handling, transitions={'problem_handling_done': 'PATROL_CON'})
@@ -679,4 +757,6 @@ def main():
     rospy.spin()
 
 if __name__ == "__main__":
+    env_detection_pub = rospy.publisher('/env_detection_command', Bool, queue_size=10)
+    env_detection_error_sub = rospy.subscriber('/env_detection_error', Bool, env_detection_error_cb)
     main()

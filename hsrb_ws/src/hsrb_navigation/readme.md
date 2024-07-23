@@ -28,7 +28,9 @@ $ rviz -d $(rospack find hsrb_navigation)/rviz/mapping.rviz
 
 
 rosrun hsrb_navigation send_goal_message_yaml.py
+
 rosrun hsrb_navigation send_goal_action_yaml.py
+
 $ roslaunch hsrb_navigation send_goal.launch
 
 
