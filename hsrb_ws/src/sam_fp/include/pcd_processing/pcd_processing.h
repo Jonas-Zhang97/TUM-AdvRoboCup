@@ -4,7 +4,7 @@
 #include <ros/ros.h>
 #include <ros/console.h>
 #include <image_transport/image_transport.h>
-
+#include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
 #include <std_msgs/Char.h>
 #include <algorithm>
@@ -61,9 +61,9 @@ protected:
 public:
     
     // Alias:
-    typedef pcl::PointXYZRGB PointType;             // Point Type (vector type)
-    typedef pcl::PointCloud<PointType> CloudType;   // PointCloud Type (cloud vector type)
-    typedef pcl::PointCloud<PointType>::Ptr CloudPtr; // Cloud Pointer Type
+    typedef pcl::PointXYZRGB Point;
+    typedef pcl::PointCloud<Point> Cloud;
+    typedef pcl::PointCloud<Point>::Ptr CloudPtr;
 
     // Constructor and Destructor
     pcd_processing_base(const std::string &topic = "/hsrb/head_rgbd_sensor/depth_registered/rectified_points",

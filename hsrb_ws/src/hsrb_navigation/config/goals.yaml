@@ -8,7 +8,7 @@ goals:
       roll: 0.0
       pitch: 0.0
       yaw: -2.143
-  - name: "desk"
+  - name: "workroom"
     position:
       x: -4.2
       y: -1.468
@@ -17,7 +17,7 @@ goals:
       roll: 0.0
       pitch: 0.0
       yaw: 2.065
-  - name: "cabinet"
+  - name: "storage"
     position:
       x: -1.97
       y: -1.445
