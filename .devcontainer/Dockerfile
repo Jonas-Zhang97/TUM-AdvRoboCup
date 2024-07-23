@@ -144,7 +144,7 @@ RUN echo -e "\nexport LOCALHOST_IP=\$(hostname -I | awk '{print \$1}')\necho \"L
 
 RUN echo 'export ROS_HOME=~/.ros' >> ~/.bashrc
 RUN echo 'alias sim_mode='\''export ROS_MASTER_URI=http://localhost:11311 export PS1="\[\033[44;1;37m\]<local>\[\033[0m\]\w$ "'\''' >> ~/.bashrc
-RUN echo 'alias hsrb_mode='\''export ROS_MASTER_URI=http://192.168.1.116:11311 export PS1="\[\033[41;1;37m\]<hsrb>\[\033[0m\]\w$ "'\''' >> ~/.bashrc
+RUN echo 'alias hsrb_mode='\''export ROS_MASTER_URI=http://192.168.1.119:11311 export PS1="\[\033[41;1;37m\]<hsrb>\[\033[0m\]\w$ "'\''' >> ~/.bashrc
 RUN echo "alias normal_mode='source ~/.bashrc'" >> ~/.bashrc
 
 RUN source home/$USERNAME/.bashrc
@@ -157,3 +157,6 @@ RUN sudo apt install -qqy lsof \
   iputils-ping
 
 # TODO: pytorch, segment_anything, etc.
+
+RUN pip install --upgrade pip
+RUN pip install torch==2.1.1 torchvision==0.16.1 torchaudio==2.1.1 --index-url https://download.pytorch.org/whl/cu118
