@@ -437,15 +437,46 @@ class stateDescription:
     postRequisite: List[str] = field(default_factory=list)
 
 # State descriptions
-start = stateDescription("start", ["None"], ["Nav", "Listen"])
-Nav = stateDescription("Nav", ["Start", "Pick", "Look For", "Audio Output", "Count"], ["Look For", "Place", "Audio Output"])
-LookFor = stateDescription("Look For", ["Nav"], ["Pick", "Listen", "Place", "Nav"])
-Pick = stateDescription("Pick", ["Look For"], ["Nav"])
-Place = stateDescription("Place", ["Nav", "Look For"], ["End"])
-Listen = stateDescription("Listen", ["Start", "Audio Output"], ["Look For", "Audio Output"])
-AudioOutput = stateDescription("Audio Output", ["Listen", "Nav", "Look For"], ["Nav", "End"])
-Follow = stateDescription("Follow", ["Audio Output"], ["End"])
-End = stateDescription("End", ["Place", "Follow", "Audio Output"], ["None"])
+Start = stateDescription("Start",
+                         ["None"],
+                         ["Nav", "Listen"])
+
+Nav = stateDescription("Nav",
+                       ["Pick", "Audio Output", "Look For", "Look For wh"],
+                       ["Look For", "Place", "Audio Output"])
+
+LookFor_wh = stateDescription("Look For wh",
+                           ["Start"],
+                           ["Nav","Listen"])
+
+LookFor = stateDescription("Look For",
+                           ["Nav"],
+                           ["Pick", "Place", "Nav"])
+
+Pick = stateDescription("Pick",
+                        ["Look For"],
+                        ["Nav"])
+
+Place = stateDescription("Place",
+                         ["Nav", "Look For"],
+                         ["End"])
+
+Listen = stateDescription("Listen",
+                          ["Start", "Audio Output"],
+                          ["Look For", "Audio Output"])
+
+AudioOutput = stateDescription("Audio Output",
+                               ["Listen", "Nav", "Look For"],
+                               ["Nav", "End"])
+
+
+# Follow = stateDescription("Follow",
+#                           ["Audio Output"],
+#                           ["End"])
+
+End = stateDescription("End",
+                       ["Place", "Audio Output"],   # remove follow for now
+                       ["None"])
 
 # State machine generator class
 class stateMachineGenerator(smach.State):
