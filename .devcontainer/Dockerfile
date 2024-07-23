@@ -158,7 +158,9 @@ RUN sudo apt install -qqy lsof \
 
 # TODO: pytorch, segment_anything, etc.
 
+RUN sudo apt install -qqy ros-noetic-moveit
 RUN pip install --upgrade pip numpy protobuf
+RUN pip install networkx==3.1
 RUN pip install torch==2.1.1 torchvision==0.16.1 torchaudio==2.1.1 --index-url https://download.pytorch.org/whl/cu118
 RUN pip install git+https://github.com/facebookresearch/segment-anything.git
 RUN pip install opencv-python pycocotools matplotlib onnxruntime onnx
@@ -166,3 +168,7 @@ RUN pip install ftfy regex tqdm
 RUN pip install git+https://github.com/openai/CLIP.git
 
 # RUN pip install -r /workspaces/adv_robocup/hsrb_ws/src/ultralytics_ros/requirements.txt
+RUN pip install mediapipe tensorflow opencv-python smash
+
+WORKDIR /workspaces/adv_robocup/hsrb_ws/src
+RUN rosdep install --from-paths . --ignore-src --rosdistro noetic -y
