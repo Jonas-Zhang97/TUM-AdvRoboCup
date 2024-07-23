@@ -101,7 +101,7 @@ class MoveitPickAction
 
   public:
     MoveitPickAction():
-      move_pick_as_(nh_, name, boost::bind(&Pick::executeCB, this, _1), false), 
+      move_pick_as_(nh_, name, boost::bind(&MoveitPickAction::executeCB, this, _1), false), 
       action_name_(name)
       {
         pick_as_.start();
