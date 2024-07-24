@@ -42,6 +42,7 @@ add_definitions(${PCL_DEFINITIONS})
 
 add_executable(pcd_processing_node src/pcd_processing_node.cpp src/pcd_processing.cpp)
 add_executable(pcd_processing_action_node src/pcd_processing_action_node.cpp src/pcd_processing.cpp)
+add_executable(calculate_centroid_client src/calculate_centroid_client.cpp)
 
 target_link_libraries(pcd_processing_node
   ${catkin_LIBRARIES}
@@ -56,3 +57,10 @@ target_link_libraries(pcd_processing_action_node
   ${PCL_LIBRARIES}  # 链接 PCL 库
 
 )
+
+target_link_libraries(calculate_centroid_client
+  ${catkin_LIBRARIES}
+  ${OpenCV_LIBRARIES}
+)
+
+add_dependencies(calculate_centroid_client ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
