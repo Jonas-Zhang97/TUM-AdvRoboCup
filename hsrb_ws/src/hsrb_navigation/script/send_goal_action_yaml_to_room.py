@@ -15,6 +15,8 @@ from tmc_msgs.msg import RoomIdentifier
 from std_msgs.msg import String
 from actionlib_msgs.msg import GoalStatus
 
+import sys
+
 def load_goals(filename):
     with open(filename, 'r') as file:
         try:
@@ -77,9 +79,11 @@ if __name__ == '__main__':
                 room_identifier_msg.name = goal_data['name']
                 room_identifier_publisher.publish(room_identifier_msg)
                 navigation_status_publisher.publish("reached")
+                sys.exit(0) 
             else:
                 rospy.logwarn(f"Failed to reach goal {goal_data['name']}.")
                 navigation_status_publisher.publish("failed")
+                sys.exit(1)
 
     except rospy.ROSInterruptException:
-        pass
+        sys.exit(1)

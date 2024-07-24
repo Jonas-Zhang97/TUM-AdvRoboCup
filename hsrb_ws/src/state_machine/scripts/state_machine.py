@@ -429,11 +429,31 @@ from dataclasses import dataclass, field
 from std_msgs.msg import String, Bool
 from typing import List
 import yaml
-
+import rospkg
+import os
 
 # Global variables
 states_list = None
 main_executed = False
+
+# pick done flag
+pick_done = False
+
+"""
+Command example:
+There is a person at the workroom, their request is:
+	grasp a bottle from the storage and bring it to me
+
+"""
+
+
+# Read config from YAML file
+config_path = rospkg.RosPack().get_path('state_machine') + '/config/config.yaml'
+def read_yaml(file_path):
+    with open(file_path, 'r') as file:
+        data = yaml.safe_load(file)
+    return data
+
 # Define state description
 @dataclass
 class stateDescription:
@@ -519,14 +539,14 @@ class NavState(smach.State): # TODO
         self.room_name = room_name
 
     def execute(self, userdata):
-        command = ["roslaunch", "hsrb_navigation", "send_goal.launch", f"room_name:={self.room_name}"]
+        command = ["roslaunch", "hsrb_navigation", "send_goal.launch", f"room_name:={current_room_name}"]
         process = subprocess.call(command)
         if process == 0:
             return 'succeeded'
         else:
             return 'failed'
 
-class LookForState(smach.State): # patrol # Done
+class LookFor_patrol_State(smach.State): # patrol # Done
     def __init__(self):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
 
@@ -538,16 +558,19 @@ class LookForState(smach.State): # patrol # Done
         else:  # Problem detected publish false
             return 'failed'
 
-class PickState(smach.State): # call SAM # TODO
-    def __init__(self):
+
+
+class Look_and_Pick_State(smach.State): # find, segment, pick # Done
+    def __init__(self, item_name):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+        self.item_name = item_name  # string
 
     def execute(self, userdata):
-        command = ["rosrun", "pkg", "node.py"]
-        process = subprocess.call(command)
-        if process == 0:
+        grasp_target_name_pub.publish(self.item_name)
+
+        if pick_done == True:  # No problem publish true
             return 'succeeded'
-        else:
+        else:  # Problem detected publish false
             return 'failed'
 
 class PlaceState(smach.State): # TODO
@@ -632,6 +655,10 @@ def env_detection_error_cb(msg):
 
 def speech_cb(msg):
     return msg.data
+
+def pick_done_cb(msg):
+    pick_done = msg.data
+    return pick_done
 
 def gpt_response_cb(msg):
     global states_list, main_executed
@@ -788,6 +815,9 @@ if __name__ == "__main__":
     env_detection_error_sub = rospy.Subscriber('/env_detection_error', Bool, env_detection_error_cb)
     listen_sub = rospy.Subscriber('/gspeech/speech', String, speech_cb)
     gpt_response_sub = rospy.Subscriber('/openai/response', String, gpt_response_cb)
+    grasp_target_name_pub = rospy.Publisher('/grasp_target_name', String, queue_size=10)
+    pick_done_sub = rospy.Subscriber('/pick_done', Bool, pick_done_cb)
+
 
     rospy.loginfo("Waiting for GPT response...")
     rospy.spin()
