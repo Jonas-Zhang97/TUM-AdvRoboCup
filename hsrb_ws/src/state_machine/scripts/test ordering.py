@@ -26,15 +26,7 @@ Start = stateDescription("Start",
 Nav = stateDescription("Nav",
                        ["Pick", "Audio Output", "Look For", "Look For wh"],
                        ["Look For", "Place", "Audio Output"])
-Nav1 = stateDescription("Nav",
-                       ["Pick", "Audio Output", "Look For"],
-                       ["Look For", "Place", "Audio Output"])
-Nav2 = stateDescription("Nav",
-                       ["Pick", "Audio Output", "Look For"],
-                       ["Look For", "Place", "Audio Output"])
-Nav3 = stateDescription("Nav",
-                       ["Pick", "Audio Output", "Look For"],
-                       ["Look For", "Place", "Audio Output"])
+
 LookFor_wh = stateDescription("Look For wh",
                            ["Start"],
                            ["Nav","Listen"])
@@ -56,12 +48,6 @@ Listen = stateDescription("Listen",
                           ["Look For", "Audio Output"])
 
 AudioOutput = stateDescription("Audio Output",
-                               ["Listen", "Nav", "Look For"],
-                               ["Nav", "End"])
-AudioOutput1 = stateDescription("Audio Output",
-                               ["Listen", "Nav", "Look For"],
-                               ["Nav", "End"])
-AudioOutput2 = stateDescription("Audio Output",
                                ["Listen", "Nav", "Look For"],
                                ["Nav", "End"])
 
