@@ -42,6 +42,7 @@ class Pick
     void higherTorso();
     void postPickRetreat();
     void toTransportPose();
+    bool checkPick();
 
   private:
     void setWorkspace();

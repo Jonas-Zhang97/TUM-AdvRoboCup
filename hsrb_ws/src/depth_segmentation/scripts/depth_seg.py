@@ -36,7 +36,7 @@ class DepSeg:
 
     self.dep_sub = rospy.Subscriber('/hsrb/head_rgbd_sensor/depth_registered/image', Image, self.dep_callback)
     self.yolores_sub = rospy.Subscriber('/yolo_result', YoloResult, self.res_callback)
-    self.command_sub = rospy.Subscriber('/target_name', String, self.command_callback)
+    self.command_sub = rospy.Subscriber('/grasp_target_name', String, self.command_callback)
     self.cam_info_sub = rospy.Subscriber('/hsrb/head_rgbd_sensor/depth_registered/camera_info', CameraInfo, self.cam_info_callback)
 
     self.dep_pub = rospy.Publisher('/target_depth_map', Image, queue_size=10)

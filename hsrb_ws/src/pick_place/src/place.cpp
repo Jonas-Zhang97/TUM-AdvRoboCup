@@ -220,6 +220,12 @@ void Place::homing()
 void Place::poseCallback(const geometry_msgs::PoseStamped::ConstPtr &msg)
 {
   command_ = true;
+  pose = *msg;
+  geometry_msgs::TransformStamped map_to_odom;
+
+  map_to_odom = tf_buffer.lookupTransform("odom", "map", ros::Time(0), ros::Duration(1.0) );
+
+  tf2::doTransform(robot_pose, robot_pose, base_link_to_leap_motion);
 
   target_position_ = msg->pose.position;
 
