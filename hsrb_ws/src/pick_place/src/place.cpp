@@ -221,15 +221,31 @@ void Place::homing()
 
 void Place::poseCallback(const geometry_msgs::PoseStamped::ConstPtr &msg)
 {
-  command_ = true;
-  pose = *msg;
-  geometry_msgs::TransformStamped map_to_odom;
+  // Copy the received message to place_pose
+  geometry_msgs::PoseStamped place_pose;
+  place_pose = *msg;
 
-  map_to_odom = tf_buffer.lookupTransform("odom", "map", ros::Time(0), ros::Duration(1.0) );
+  // Create a TransformListener to listen for transforms
+  tf2_ros::Buffer tfBuffer;
+  tf2_ros::TransformListener tfListener(tfBuffer);
 
-  tf2::doTransform(robot_pose, robot_pose, base_link_to_leap_motion);
+  try
+  {
+    // Look up the transform from "map" to "odom" frame
+    geometry_msgs::TransformStamped map_to_odom;
+    map_to_odom = tfBuffer.lookupTransform("odom", "map", ros::Time(0), ros::Duration(3.0));
 
-  target_position_ = msg->pose.position;
+    // Transform the place_pose from "map" frame to "odom" frame
+    tf2::doTransform(place_pose, place_pose, map_to_odom);
 
-  ROS_INFO_STREAM("Command received, position: " << target_position_);
+    // Set the target position to the transformed pose's position
+    geometry_msgs::Point target_position_ = place_pose.pose.position;
+
+    // Log the received command and position
+    ROS_INFO_STREAM("Command received, position: " << target_position_);
+  }
+  catch (tf2::TransformException &ex)
+  {
+    ROS_ERROR("%s", ex.what());
+  }
 }
