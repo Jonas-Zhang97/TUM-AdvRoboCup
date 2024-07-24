@@ -17,6 +17,8 @@ rosrun play_motion move_joint head_2_joint -0.7 2.0
 
 ```bash
 rosrun sam_fp samros.py “bottle”
+rosrun sam_fp use_yolo.py 
+
 rosrun sam_fp pcd_processing_node
 rosrun sam_fp pcd_processing_action_node
 rosrun sam_fp calculate_centroid_client
