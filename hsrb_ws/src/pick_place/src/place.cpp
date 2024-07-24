@@ -64,6 +64,7 @@ void Place::place()
   toPlacePose();
   openGripper();
   postPlaceRetreat();
+  closeGripper();
   homing();
 }
 
@@ -91,6 +92,32 @@ void Place::prePlaceApproach()
   tf2::Quaternion quaternion;
   quaternion.setRPY(-1.57, -1.57, target_orientation_ - 1.57);
   pre_approach_pose.pose.orientation = tf2::toMsg(quaternion);
+
+  std::vector<moveit_msgs::CollisionObject> collision_object;
+  collision_object.resize(1);
+  collision_object[0].header.frame_id = ref_frame_;
+  collision_object[0].id = "collision_object";
+
+  geometry_msgs::Pose box_pose;
+  box_pose.orientation = pre_approach_pose.pose.orientation;
+  box_pose.position = target_position_;
+  box_pose.position.z -= 0.1;
+  box_pose.position.z /= 2;
+  box_pose.position.x = target_position_.x;
+  box_pose.position.y = target_position_.y;
+
+  shape_msgs::SolidPrimitive primitive;
+  primitive.type = primitive.BOX;
+  primitive.dimensions.resize(3);
+  primitive.dimensions[primitive.BOX_Z] = 0.26;
+  primitive.dimensions[primitive.BOX_Y] = 5;
+  primitive.dimensions[primitive.BOX_X] = box_pose.position.z * 2;
+
+  collision_object[0].primitives.push_back(primitive);
+  collision_object[0].primitive_poses.push_back(box_pose);
+  collision_object[0].operation = collision_object[0].ADD;
+
+  PSI_.addCollisionObjects(collision_object);
 
   whole_body_grp.setPoseTarget(pre_approach_pose);
   bool succ = (whole_body_grp.plan(whole_body_plan_) == moveit_msgs::MoveItErrorCodes::SUCCESS);
@@ -132,7 +159,7 @@ void Place::toPlacePose()
 void Place::openGripper()
 {
   tmc_control_msgs::GripperApplyEffortActionGoal open_goal;
-  open_goal.goal.effort = -1;
+  open_goal.goal.effort = -0.2;
   open_goal.goal.do_control_stop = true;
   gripper_pub_.publish(open_goal);
   ros::Duration(0.5).sleep();
@@ -170,6 +197,15 @@ void Place::postPlaceRetreat()
   double fraction = whole_body_grp.computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory);
 
   whole_body_grp.execute(trajectory);
+}
+
+void Place::closeGripper()
+{
+  tmc_control_msgs::GripperApplyEffortActionGoal close_goal;
+  close_goal.goal.effort = 0.2;
+  close_goal.goal.do_control_stop = true;
+  gripper_pub_.publish(close_goal);
+  ros::Duration(0.5).sleep();
 }
 
 void Place::homing()

@@ -1,9 +1,11 @@
 #include "pcd_processing/pcd_processing.h"
 
+
+
 // Constructor for base class
-pcd_processing_base::pcd_processing_base(const std::string &topic, const std::string &frame)
-    : pointcloud_topic(topic), base_frame(frame), is_cloud_updated(false), centroid_published_(false) {
-}
+// pcd_processing_base::pcd_processing_base(const std::string &topic, const std::string &frame)
+//     : pointcloud_topic(topic), base_frame(frame), is_cloud_updated(false), centroid_published_(false) {
+// }
 
 // Initialize method for base class
 bool pcd_processing_base::initialize(ros::NodeHandle &nh) {
@@ -23,7 +25,7 @@ bool pcd_processing_base::initialize(ros::NodeHandle &nh) {
 
 // Update method for base class
 void pcd_processing_base::update(const ros::Time &time) {
-    if (is_cloud_updated && !centroid_published_) {
+    if (is_cloud_updated && !centroid_published_) {// && !centroid_published_
         if (!raw_cloud_preprocessing(raw_cloud_, preprocessed_cloud_)) {
             ROS_ERROR("Raw cloud preprocessing failed!");
             return;
@@ -45,14 +47,14 @@ void pcd_processing_base::update(const ros::Time &time) {
     }
 }
 
-bool pcd_processing_base::raw_cloud_preprocessing(cloudPtr &input, cloudPtr &output) {
+bool pcd_processing_base::raw_cloud_preprocessing(CloudPtr &input, CloudPtr &output) {
     // Modify if further preprocessing needed
     // Note: Since the point cloud segmentation is pixel-wise, preprocessing may cause lack of points.
     *output = *input;
     return true;
 }
 
-bool pcd_processing_base::cut_point_cloud(cloudPtr &input, const std::vector<singlemask> &masks, cloudPtr &objects) {
+bool pcd_processing_base::cut_point_cloud(CloudPtr &input, const std::vector<singlemask> &masks, CloudPtr &objects) {
     // Implement the logic to cut the point cloud using masks
     *objects = *input;
     objects->points.clear();
@@ -89,7 +91,7 @@ void pcd_processing_base::masksCallback(const masks_msgs::maskID::Ptr &msg) {
     processed_masks_ = maskID_msg_processing(msg);
 }
 
-project_msgs::LabeledCentroid pcd_processing_base::calculateCentroid(const cloudPtr &cloud, const std_msgs::Header &header) {
+project_msgs::LabeledCentroid pcd_processing_base::calculateCentroid(const CloudPtr &cloud, const std_msgs::Header &header) {
     geometry_msgs::PointStamped centroid;
     project_msgs::LabeledCentroid labeled_centroid;
     centroid.header = header;
@@ -194,7 +196,7 @@ void pcd_processing::executeCB(const project_msgs::CalculateCentroidGoalConstPtr
 }
 
 geometry_msgs::Point pcd_processing::calculateCentroidAction(const sensor_msgs::PointCloud2 &point_cloud) {
-    cloudPtr cloud(new cloud);
+    CloudPtr cloud(new Cloud);
     pcl::fromROSMsg(point_cloud, *cloud);
 
     geometry_msgs::Point centroid;

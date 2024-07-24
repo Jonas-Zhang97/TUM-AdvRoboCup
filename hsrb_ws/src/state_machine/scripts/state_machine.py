@@ -533,7 +533,7 @@ class LookForState(smach.State): # patrol # Done
         else:  # Problem detected publish false
             return 'failed'
 
-class PickState(smach.State): # call SAM
+class PickState(smach.State): # call SAM # TODO
     def __init__(self):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
 
@@ -545,7 +545,7 @@ class PickState(smach.State): # call SAM
         else:
             return 'failed'
 
-class PlaceState(smach.State):
+class PlaceState(smach.State): # TODO
     def __init__(self):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
 
@@ -557,19 +557,20 @@ class PlaceState(smach.State):
         else:
             return 'failed'
 
-class ListenState(smach.State):
+
+class ListenState(smach.State):  # Done
     def __init__(self):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
-
+        self.sr_result = ''
     def execute(self, userdata):
-        command = ["rosrun", "pkg", "node.py"]
-        process = subprocess.call(command)
-        if process == 0:
+
+        self.sr_result = speech_cb
+        if self.sr_result != '':
             return 'succeeded'
         else:
             return 'failed'
 
-class AudioState(smach.State):
+class AudioState(smach.State): # TODO
     def __init__(self):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
 
@@ -622,6 +623,9 @@ def emergency_cb(userdata, msg):
     return not msg.data  # Trigger emergency stop when msg.data is True
 
 def env_detection_error_cb(userdata, msg):
+    return msg.data
+
+def speech_cb(userdata, msg):
     return msg.data
 
 # Main function
@@ -759,4 +763,5 @@ def main():
 if __name__ == "__main__":
     env_detection_pub = rospy.publisher('/env_detection_command', Bool, queue_size=10)
     env_detection_error_sub = rospy.subscriber('/env_detection_error', Bool, env_detection_error_cb)
+    listen_sub = rospy.subscriber('/gspeech/speech', String, speech_cb)
     main()

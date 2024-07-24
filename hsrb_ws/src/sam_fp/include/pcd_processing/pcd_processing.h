@@ -4,7 +4,7 @@
 #include <ros/ros.h>
 #include <ros/console.h>
 #include <image_transport/image_transport.h>
-
+#include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
 #include <std_msgs/Char.h>
 #include <algorithm>
@@ -45,6 +45,11 @@
 #include <actionlib/server/simple_action_server.h>
 #include <project_msgs/CalculateCentroidAction.h>
 
+#include <project_msgs/CalculateCentroidActionFeedback.h>
+#include <project_msgs/CalculateCentroidActionResult.h>
+#include <project_msgs/CalculateCentroidActionGoal.h>
+
+
 /**
 * @brief: Class pcd_processing: cut RGB-D point cloud using 2D-masks generated
 * by Segment Anything from Meta. 
@@ -61,9 +66,9 @@ protected:
 public:
     
     // Alias:
-    typedef pcl::PointXYZRGB PointType;             // Point Type (vector type)
-    typedef pcl::PointCloud<PointType> CloudType;   // PointCloud Type (cloud vector type)
-    typedef pcl::PointCloud<PointType>::Ptr CloudPtr; // Cloud Pointer Type
+    typedef pcl::PointXYZRGB Point;
+    typedef pcl::PointCloud<Point> Cloud;
+    typedef pcl::PointCloud<Point>::Ptr CloudPtr;
 
     // Constructor and Destructor
     pcd_processing_base(const std::string &topic = "/hsrb/head_rgbd_sensor/depth_registered/rectified_points",

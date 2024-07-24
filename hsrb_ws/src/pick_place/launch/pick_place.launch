@@ -1,5 +1,7 @@
 <launch>
 
+  <include file="$(find hsrb_moveit_config)/launch/demo_with_controller.launch"/>
+
   <node name="pick_node" pkg="pick_place" type="pick_node" respawn="false" output="screen">
   </node>
 

@@ -35,6 +35,7 @@ class Place
     void prePlaceApproach();
     void toPlacePose();
     void openGripper();
+    void closeGripper();
     void postPlaceRetreat();
     void homing();
 
