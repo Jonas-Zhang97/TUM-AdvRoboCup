@@ -3,5 +3,6 @@
 
   <node pkg="hsrb_navigation" type="send_goal_action_yaml_to_room.py" name="send_goal" output="screen">
     <param name="goals_file" value="$(arg goals_file)"/>
+    <param name="room_name" value="$(arg room_name)"/>
   </node>
 </launch>

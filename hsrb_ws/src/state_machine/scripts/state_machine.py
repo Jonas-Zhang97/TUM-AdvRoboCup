@@ -514,11 +514,12 @@ class startState(smach.State):
             return 'failed'
 
 class NavState(smach.State): # TODO
-    def __init__(self):
+    def __init__(self, room_name):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+        self.room_name = room_name
 
     def execute(self, userdata):
-        command = ["rosrun", "pkg", "node.py"]
+        command = ["roslaunch", "hsrb_navigation", "send_goal.launch", f"room_name:={self.room_name}"]
         process = subprocess.call(command)
         if process == 0:
             return 'succeeded'

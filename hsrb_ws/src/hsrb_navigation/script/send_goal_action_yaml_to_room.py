@@ -24,8 +24,13 @@ def load_goals(filename):
             print(exc)
             return []
 
-if __name__ == '__main__':
+def get_goal_by_name(goals, room_name):
+    for goal in goals:
+        if goal['name'] == room_name:
+            return goal
+    return None
 
+if __name__ == '__main__':
     try:
         rospy.init_node('send_goal', anonymous=True)
         client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
@@ -34,11 +39,16 @@ if __name__ == '__main__':
         room_identifier_publisher = rospy.Publisher('room_identifier', RoomIdentifier, queue_size=10)
         navigation_status_publisher = rospy.Publisher('navigation_status', String, queue_size=10)
 
-        goals_file = rospy.get_param('~goals_file')  
+        goals_file = rospy.get_param('~goals_file')
+        room_name = rospy.get_param('~room_name')
+
         goals = load_goals(goals_file)
+        goal_data = get_goal_by_name(goals, room_name)
 
-
-        for goal_data in goals:
+        if not goal_data:
+            rospy.logerr(f"Goal for room {room_name} not found.")
+            navigation_status_publisher.publish("failed")
+        else:
             rospy.loginfo(f"Sending goal: {goal_data['name']}")
             goal = MoveBaseGoal()
             goal.target_pose.header.stamp = rospy.Time.now()
@@ -60,7 +70,6 @@ if __name__ == '__main__':
             client.send_goal(goal)
 
             finished = client.wait_for_result()
-            # if finished:
             state = client.get_state()
             if state == GoalStatus.SUCCEEDED:
                 rospy.loginfo(f"Goal {goal_data['name']} reached successfully.")
@@ -68,7 +77,6 @@ if __name__ == '__main__':
                 room_identifier_msg.name = goal_data['name']
                 room_identifier_publisher.publish(room_identifier_msg)
                 navigation_status_publisher.publish("reached")
-
             else:
                 rospy.logwarn(f"Failed to reach goal {goal_data['name']}.")
                 navigation_status_publisher.publish("failed")
