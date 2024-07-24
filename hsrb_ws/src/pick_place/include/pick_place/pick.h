@@ -19,9 +19,10 @@ class Pick
     moveit::planning_interface::MoveGroupInterface whole_body_grp;
     moveit::planning_interface::MoveGroupInterface arm_grp;
     moveit::planning_interface::MoveGroupInterface gripper_grp;
+    moveit::planning_interface::MoveGroupInterface head_grp;
 
   public:
-    Pick():whole_body_grp("whole_body"), arm_grp("arm"), gripper_grp("gripper") {};
+    Pick():whole_body_grp("whole_body"), arm_grp("arm"), gripper_grp("gripper"), head_grp("head") {};
 
   public:
     bool init();
@@ -33,6 +34,7 @@ class Pick
   
   private:
     void computeTargetOrientation();
+    void moveHead();
     void prePickApproach();
     void openGripper();
     void toPickPose();

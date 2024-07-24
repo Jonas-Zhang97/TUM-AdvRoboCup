@@ -34,6 +34,7 @@ bool Pick::init()
 
   // Initialize HSRB
   // openGripper();
+  moveHead();
   toTransportPose();
   ROS_INFO_STREAM("Pick Node Initialized!");
   return true;
@@ -56,7 +57,7 @@ void Pick::update()
     object_names_ = PSI_.getKnownObjectNames();
 
     ROS_INFO_STREAM("Number of collision objects in the scene: " << object_names_.size());
-    
+
     PSI_.removeCollisionObjects(object_names_);
     object_names_.clear();
 
@@ -87,6 +88,13 @@ void Pick::computeTargetOrientation()
   target_orientation_ = atan2(vec.y, vec.x);
 }
 
+void Pick::moveHead()
+{
+  std::vector<double> head_ready_value = {0.0, -0.125};
+  head_grp.setJointValueTarget(head_ready_value);
+  head_grp.move();
+}
+
 void Pick::prePickApproach()
 {
   /* 
@@ -104,6 +112,32 @@ void Pick::prePickApproach()
   quaternion.setRPY(-1.57, -1.57, target_orientation_ - 1.57);
 
   pre_approach_pose.pose.orientation = tf2::toMsg(quaternion);
+
+  std::vector<moveit_msgs::CollisionObject> collision_object;
+  collision_object.resize(1);
+  collision_object[0].header.frame_id = ref_frame_;
+  collision_object[0].id = "collision_object";
+
+  geometry_msgs::Pose box_pose;
+  box_pose.orientation = pre_approach_pose.pose.orientation;
+  box_pose.position = target_position_;
+  box_pose.position.z -= 0.1;
+  box_pose.position.z /= 2;
+  box_pose.position.x = target_position_.x;
+  box_pose.position.y = target_position_.y;
+
+  shape_msgs::SolidPrimitive primitive;
+  primitive.type = primitive.BOX;
+  primitive.dimensions.resize(3);
+  primitive.dimensions[primitive.BOX_Z] = 0.26;
+  primitive.dimensions[primitive.BOX_Y] = 5;
+  primitive.dimensions[primitive.BOX_X] = box_pose.position.z * 2;
+
+  collision_object[0].primitives.push_back(primitive);
+  collision_object[0].primitive_poses.push_back(box_pose);
+  collision_object[0].operation = collision_object[0].ADD;
+
+  PSI_.addCollisionObjects(collision_object);
 
   ROS_INFO_STREAM("Pre-approach pose: \n" << pre_approach_pose.pose);
 
@@ -123,7 +157,7 @@ void Pick::prePickApproach()
 void Pick::openGripper()     // TODO: Implement this
 {
   tmc_control_msgs::GripperApplyEffortActionGoal open_goal;
-  open_goal.goal.effort = -1;
+  open_goal.goal.effort = -0.2;
   open_goal.goal.do_control_stop = true;
   gripper_pub_.publish(open_goal);
   ros::Duration(0.5).sleep();

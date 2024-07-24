@@ -23,6 +23,7 @@ class SamClipRos:
         self.image_topic = rospy.get_param('image_topic', '/hsrb/head_rgbd_sensor/rgb/image_raw') #/xtion/rgb/image_raw# Default is image_raw topic of Tiago robot
         self.pub = rospy.Publisher('/sam_mask',maskID, queue_size=1000) #TODO: pub np.ndarray related func: maskprocessing() and Pub_mask()
         self.sub = rospy.Subscriber(self.image_topic, SensorImage, self.callback) # TODO: find image topic from Tiago!
+        self.mask_pub = rospy.Publisher('/mask_img', SensorImage, queue_size=1000)
         self.cropped_boxes = []
         self.search_text = "bottle" # rospy.get_param('search_text', None)
         # if len(sys.argv) > 1:
@@ -234,6 +235,7 @@ class SamClipRos:
         # plt.axis('off')
         # plt.show()
         # print('plot show here')
+        self.mask_pub.publish(self.cv2rosimg(seg_image))
         exported_masks = self.maskprocessing(chosen_masks,True)
         self.Pub_mask(exported_masks)
 
