@@ -150,11 +150,12 @@ RUN echo "alias normal_mode='source ~/.bashrc'" >> ~/.bashrc
 RUN source home/$USERNAME/.bashrc
 
 RUN echo 'source /workspaces/adv_robocup/hsrb_ws/devel/setup.bash' >> ~/.bashrc
-
+RUN echo "alias sss='source devel/setup.bash'" >> ~/.bashrc
 RUN sudo apt install -qqy lsof \
   net-tools\
   lshw\
-  iputils-ping
+  iputils-ping\
+  python-is-python3
 
 # TODO: pytorch, segment_anything, etc.
 
