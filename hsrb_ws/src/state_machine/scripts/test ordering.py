@@ -58,12 +58,7 @@ Listen = stateDescription("Listen",
 AudioOutput = stateDescription("Audio Output",
                                ["Listen", "Nav", "Look For"],
                                ["Nav", "End"])
-AudioOutput1 = stateDescription("Audio Output",
-                               ["Listen", "Nav", "Look For"],
-                               ["Nav", "End"])
-AudioOutput2 = stateDescription("Audio Output",
-                               ["Listen", "Nav", "Look For"],
-                               ["Nav", "End"])
+
 
 # Follow = stateDescription("Follow",
 #                           ["Audio Output"],
