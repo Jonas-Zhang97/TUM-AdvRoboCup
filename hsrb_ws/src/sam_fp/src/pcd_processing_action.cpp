@@ -1,5 +1,7 @@
 #include "pcd_processing/pcd_processing.h"
 
+
+
 void pcd_processing::executeCB(const project_msgs::CalculateCentroidGoalConstPtr &goal) {
     // Start calculating centroid
     geometry_msgs::Point centroid = calculateCentroidAction(goal->point_cloud);

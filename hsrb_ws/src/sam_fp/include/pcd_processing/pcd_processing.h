@@ -45,6 +45,11 @@
 #include <actionlib/server/simple_action_server.h>
 #include <project_msgs/CalculateCentroidAction.h>
 
+#include <project_msgs/CalculateCentroidActionFeedback.h>
+#include <project_msgs/CalculateCentroidActionResult.h>
+#include <project_msgs/CalculateCentroidActionGoal.h>
+
+
 /**
 * @brief: Class pcd_processing: cut RGB-D point cloud using 2D-masks generated
 * by Segment Anything from Meta. 
