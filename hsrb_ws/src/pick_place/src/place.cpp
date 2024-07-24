@@ -9,6 +9,7 @@ bool Place::init()
 
   place_done_pub_ = nh_.advertise<std_msgs::Bool>(place_done_topic_, 1);
   gripper_pub_ = nh_.advertise<tmc_control_msgs::GripperApplyEffortActionGoal>("/hsrb/gripper_controller/apply_force/goal", 10);
+  problem_pub_ = nh_.advertise<std_msgs::Bool>("/problem_solved", 1);
 
   command_ = false;
   place_done_.data = true;
@@ -45,6 +46,7 @@ void Place::update()
     place();
     
     place_done_pub_.publish(place_done_);
+    problem_pub_.publish(place_done_);
 
     // Clear all collision objects in the planning scene
     std::vector<std::string> object_names;

@@ -48,6 +48,7 @@ class Place
 
     ros::Publisher gripper_pub_;
     ros::Publisher place_done_pub_;
+    ros::Publisher problem_pub_;
 
   public:
     std::string place_target_topic_;
