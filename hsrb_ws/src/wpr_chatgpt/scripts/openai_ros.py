@@ -14,7 +14,7 @@ class openai_handler:
     # initialize chatgpt and ROS
     def __init__(self, _initial_prompt) -> None:
        # openai.api_key = os.getenv("OPENAI_API_KEY")                                                      
-        openai.api_key = "<api-key>"
+        openai.api_key = "sk-proj-OyZbI9topMSe5mS8i67TT3BlbkFJ4SP3jtXrRMgmysRZQ9gf"#"<api-key>" #sk-proj-OyZbI9topMSe5mS8i67TT3BlbkFJ4SP3jtXrRMgmysRZQ9gf
         self.initial_prompt = _initial_prompt
         self.new_response = False
         self.response = ""
