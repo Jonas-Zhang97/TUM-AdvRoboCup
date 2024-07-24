@@ -17,5 +17,28 @@ UPD: Fixed, now working with API v2, you need an API Key from  Google Developer 
 
 
 Usage
+
+Before use:
+
+The package include speech recognition module. First type
+
+arecord -l
+to find your audio input device, for example, card 4, device 0, then change self.sox_cmd in gspeech.py accordingly. Here, the self.sox_cmd should be
+
+self.sox_cmd = "sox -r 48000 -c 1 -t alsa hw:4,0  recording.flac silence 1 0.1 1% 1 1.5 1%"
+where hw:4,0 represent card 4, device 0.
+
+
 -----
 `rosrun gspeech gspeech.py `
+
+To check published msg from aruco_detector:
+
+```shell
+rostopic echo /aruco_marker_info
+```
+To check what returns from speech recognition module:
+```shell
+rostopic echo /gspeech/speech
+```
+
