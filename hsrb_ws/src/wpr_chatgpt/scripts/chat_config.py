@@ -14,7 +14,7 @@ we have the following states:
 - Listen
 - Audio Output
 - End
-
+expample command: 
 output a list of the sequence. You shall only resonse in python list, but in a form of plain text. 
 For example: states = [<your response>]
 
