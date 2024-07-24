@@ -32,18 +32,20 @@
 			"--runtime=nvidia",
 			"--network=host",
 			"--gpus=all",
-			"--privileged"
+			"--privileged",
+			"--device", "/dev/snd",
+			"-v", "/dev/snd:/dev/snd"
 	],
 	"mounts": [
 		"source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind",
 		"source=/dev/dri,target=/dev/dri,type=bind"
-	]
-	// "mounts": [
-	// 		{
-	// 				"source": "/dev/dri",
-	// 				"target": "/dev/dri",
-	// 				"type": "bind"
-	// 		},
+	],
+	"mounts": [
+			{
+					"source": "/dev/dri",
+					"target": "/dev/dri",
+					"type": "bind"
+			}
 	// 		{
 	// 				"source": "/tmp/.X11-unix",
 	// 				"target": "/tmp/.X11-unix",
@@ -54,5 +56,5 @@
 	// 				"target": "/etc/machine-id",
 	// 				"type": "bind"
 	// 		}
-	// ]
+	]
 }

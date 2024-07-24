@@ -430,6 +430,10 @@ from std_msgs.msg import String, Bool
 from typing import List
 import yaml
 
+
+# Global variables
+states_list = None
+main_executed = False
 # Define state description
 @dataclass
 class stateDescription:
@@ -480,19 +484,19 @@ End = stateDescription("End",
                        ["None"])
 
 # State machine generator class
-# class stateMachineGenerator(smach.State):
-#     def __init__(self, state_description):
-#         self.lpreRequsite = state_description.preRequisite
-#         self.lpostRequsite = state_description.postRequisite
-#         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
-#
-#     def execute(self, userdata):
-#         command = ["rosrun", "pkg", "node.py"]
-#         process = subprocess.call(command)
-#         if process == 0:
-#             return 'succeeded'
-#         else:
-#             return 'failed'
+class stateMachineGenerator(smach.State):
+    def __init__(self, state_description):
+        self.lpreRequsite = state_description.preRequisite
+        self.lpostRequsite = state_description.postRequisite
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+
+    def execute(self, userdata):
+        command = ["rosrun", "pkg", "node.py"]
+        process = subprocess.call(command)
+        if process == 0:
+            return 'succeeded'
+        else:
+            return 'failed'
 
 # Start state
 class startState(smach.State):
@@ -610,27 +614,44 @@ class EmergencyStop(smach.State):
 def speech_cb(userdata, msg):
     return msg.data != ""
 
-def wave_cb(userdata, msg):
+def wave_cb(msg):
     return msg.data
 
-def problem_detected_cb(userdata, msg):
+def problem_detected_cb(msg):
     return msg.data
 
-def problem_solved_cb(userdata, msg):
+def problem_solved_cb(msg):
     return msg.data
 
-def emergency_cb(userdata, msg):
+def emergency_cb(msg):
     return not msg.data  # Trigger emergency stop when msg.data is True
 
-def env_detection_error_cb(userdata, msg):
+def env_detection_error_cb(msg):
     return msg.data
 
-def speech_cb(userdata, msg):
+def speech_cb(msg):
     return msg.data
 
+def gpt_response_cb(msg):
+    global states_list, main_executed
+    if not main_executed:
+        # Step 1: Extract the list part of the string
+        list_part = msg.data.split('=')[1].strip()
+
+        # Step 2: Remove the square brackets
+        list_part = list_part.strip('[]')
+
+        # Step 3: Split the string into individual elements
+        elements = list_part.split(',')
+
+        # Step 4: Strip any extra whitespace from each element
+        states_list = [element.strip() for element in elements]
+        rospy.loginfo("State list: %s", states_list)
+        main()
+    return states_list
 # Main function
 def main():
-    rospy.init_node('state_machine')
+
 
     # Create the top-level state machine
     sm = smach.StateMachine(outcomes=['overall_succeeded', 'overall_failed', 'emergency_stopped'])
@@ -649,7 +670,6 @@ def main():
     STATE_D = stateMachineGenerator(sD_D)
     STATE_E = stateMachineGenerator(sD_E)
 
-    state_list = [sD_A, sD_B, sD_C, sD_D, sD_E]
 
     with sm:
         # Patrol inspection mode
@@ -761,7 +781,13 @@ def main():
     rospy.spin()
 
 if __name__ == "__main__":
-    env_detection_pub = rospy.publisher('/env_detection_command', Bool, queue_size=10)
-    env_detection_error_sub = rospy.subscriber('/env_detection_error', Bool, env_detection_error_cb)
-    listen_sub = rospy.subscriber('/gspeech/speech', String, speech_cb)
-    main()
+    rospy.init_node('state_machine')
+
+    env_detection_pub = rospy.Publisher('/env_detection_command', Bool, queue_size=10)
+    env_detection_error_sub = rospy.Subscriber('/env_detection_error', Bool, env_detection_error_cb)
+    listen_sub = rospy.Subscriber('/gspeech/speech', String, speech_cb)
+    gpt_response_sub = rospy.Subscriber('/openai/response', String, gpt_response_cb)
+
+    rospy.loginfo("Waiting for GPT response...")
+    rospy.spin()
+

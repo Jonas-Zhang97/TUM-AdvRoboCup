@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #########################################################################################
 #                                    _                                                  #
@@ -51,7 +50,7 @@ class GSpeech(object):
     """Constructor"""
     # configure system commands
     # TODO: change config accordingly
-    self.sox_cmd = "sox -r 48000 -c 1 -t alsa hw:2,0  recording.flac silence 1 0.1 1% 1 1.5 1%"
+    self.sox_cmd = "sox -r 48000 -c 1 -t alsa hw:0,6  recording.flac silence 1 0.1 1% 1 1.5 1%"
     self.sox_args = shlex.split(self.sox_cmd)
     # start ROS node
     rospy.init_node('gspeech')

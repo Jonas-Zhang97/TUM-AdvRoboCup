@@ -15,3 +15,10 @@ include_directories(
 # For example:
 # add_executable(your_executable src/your_source_file.cpp)
 # target_link_libraries(your_executable ${catkin_LIBRARIES})
+catkin_install_python(PROGRAMS src/gspeech.py
+DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+catkin_install_python(PROGRAMS src/gspeech_new.py
+DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)

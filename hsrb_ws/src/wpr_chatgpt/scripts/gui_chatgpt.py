@@ -5,8 +5,8 @@ import rospy
 from std_msgs.msg import String
 import threading
 
-import speech_recognition as sr
-import pyaudio
+# import speech_recognition as sr
+# import pyaudio
 import subprocess
 
 
@@ -21,27 +21,27 @@ def send_message():
     pub.publish(message)
 
 
-def voice_input():
-    def start_recording():
-        voice_input_button.config(text="Recording...")
-
-        recognizer = sr.Recognizer()
-        with sr.Microphone() as source:
-            audio = recognizer.listen(source)
-
-        try:
-            message = recognizer.recognize_google(audio)
-            entry.delete(0, tk.END)  # Clear the current text in the entry widget
-            entry.insert(tk.END, message)  # Insert the recognized text into the entry widget
-        except sr.UnknownValueError:
-            display.insert(tk.END, "AI: Sorry, say again.\n")
-        except sr.RequestError as e:
-            display.insert(tk.END, "AI: Sorry, an error occurred while processing your speech: {}\n".format(str(e)))
-
-        voice_input_button.config(text="Voice Input")
-
-    voice_input_button.config(text="Recording...")
-    threading.Thread(target=start_recording).start()
+# def voice_input():
+#     def start_recording():
+#         voice_input_button.config(text="Recording...")
+#
+#         recognizer = sr.Recognizer()
+#         with sr.Microphone() as source:
+#             audio = recognizer.listen(source)
+#
+#         try:
+#             message = recognizer.recognize_google(audio)
+#             entry.delete(0, tk.END)  # Clear the current text in the entry widget
+#             entry.insert(tk.END, message)  # Insert the recognized text into the entry widget
+#         except sr.UnknownValueError:
+#             display.insert(tk.END, "AI: Sorry, say again.\n")
+#         except sr.RequestError as e:
+#             display.insert(tk.END, "AI: Sorry, an error occurred while processing your speech: {}\n".format(str(e)))
+#
+#         voice_input_button.config(text="Voice Input")
+#
+#     voice_input_button.config(text="Recording...")
+#     threading.Thread(target=start_recording).start()
 
 
 def receive_message(data):
@@ -70,7 +70,7 @@ rospy.Subscriber('openai/response', String, receive_message)
 
 
 # Initialize PyAudio
-audio = pyaudio.PyAudio()
+# audio = pyaudio.PyAudio()
 
 
 # MAIN INTERFACE
@@ -104,8 +104,8 @@ reset_button.pack(side=tk.LEFT, padx=5, expand=True)
 
 # Create voice input button
 is_recording = False
-voice_input_button = tk.Button(button_frame, text="Voice Input", command=voice_input, width=15, height=2)
-voice_input_button.pack(side=tk.LEFT, padx=5, expand=True)
+# voice_input_button = tk.Button(button_frame, text="Voice Input", command=voice_input, width=15, height=2)
+# voice_input_button.pack(side=tk.LEFT, padx=5, expand=True)
 
 
 #create send button
