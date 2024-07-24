@@ -415,8 +415,7 @@
 # This indicates that the monitored condition has been met (e.g., an emergency stop signal has been received),
 # and the state machine should transition to handle this condition (e.g., stop the machine).
 # """
-
-
+import numpy as np
 ############################################################################################################
 ##test code from GPT
 ############################################################################################################
@@ -431,13 +430,21 @@ from typing import List
 import yaml
 import rospkg
 import os
+from geometry_msgs.msg import PoseStamped
+from tf.transformations import quaternion_from_euler
 
 # Global variables
 states_list = None
 main_executed = False
 
 # pick done flag
-pick_done = False
+pick_done = None
+place_done = None
+
+# current mode:
+mode = 'patrol'
+monitor_problem = False
+problem_solved = True
 
 """
 Command example:
@@ -536,11 +543,19 @@ class startState(smach.State):
 class NavState(smach.State): # TODO
     def __init__(self, room_name):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
-        self.room_name = room_name
+        self.room_name = ['goal1', 'kitchen', 'workroom', 'storage']
 
     def execute(self, userdata):
-        command = ["roslaunch", "hsrb_navigation", "send_goal.launch", f"room_name:={current_room_name}"]
-        process = subprocess.call(command)
+        if monitor_problem == False  and problem_solved == True:# further add monitor speech and monitor wave
+            mode = 'patrol'
+        else:
+            mode = 'serve'
+
+        if mode == 'patrol':
+            current_room_name = self.room_name[0]
+            self.room_name.remove(current_room_name)
+            command = ["roslaunch", "hsrb_navigation", "send_goal.launch", f"room_name:={current_room_name}"]
+            process = subprocess.call(command)
         if process == 0:
             return 'succeeded'
         else:
@@ -549,11 +564,12 @@ class NavState(smach.State): # TODO
 class LookFor_patrol_State(smach.State): # patrol # Done
     def __init__(self):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
-
+        self.bool = None
     def execute(self, userdata):
         env_detection_pub.publish(True)
-        bool = env_detection_error_cb
-        if bool:  # No problem publish true
+        while self.bool is None:
+            self.bool = env_detection_error_cb
+        if self.bool:  # No problem publish true
             return 'succeeded'
         else:  # Problem detected publish false
             return 'failed'
@@ -564,25 +580,42 @@ class Look_and_Pick_State(smach.State): # find, segment, pick # Done
     def __init__(self, item_name):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
         self.item_name = item_name  # string
-
+        global pick_done
+        pick_done = None
     def execute(self, userdata):
         grasp_target_name_pub.publish(self.item_name)
-
+        while pick_done is None:
+            pass # wait the signal from pick node
         if pick_done == True:  # No problem publish true
             return 'succeeded'
-        else:  # Problem detected publish false
+        if pick_done == False:  # Problem detected publish false
             return 'failed'
 
-class PlaceState(smach.State): # TODO
+class PlaceState(smach.State): # done
     def __init__(self):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+        global place_done
+        place_done = None
+        euler = np.array([0, 0, 30])
+        quaternion = quaternion_from_euler(euler[0], euler[1], euler[2])
+        self.place_pose = PoseStamped()
+        self.place_pose.pose.x = 3.9
+        self.place_pose.pose.y = 1.48
+        self.place_pose.pose.z = 0.8
+        self.place_pose.quaternion.x = quaternion[0]
+        self.place_pose.quaternion.y = quaternion[1]
+        self.place_pose.quaternion.z = quaternion[2]
+        self.place_pose.quaternion.w = quaternion[3]
+
 
     def execute(self, userdata):
-        command = ["rosrun", "pkg", "node.py"]
-        process = subprocess.call(command)
-        if process == 0:
+        place_pose_pub.publish(self.place_pose)
+
+        while place_done is None:
+            pass # wait the signal from pick node
+        if place_done == True:  # No problem publish true
             return 'succeeded'
-        else:
+        if place_done == False:  # Problem detected publish false
             return 'failed'
 
 
@@ -645,13 +678,17 @@ def problem_detected_cb(msg):
     return msg.data
 
 def problem_solved_cb(msg):
-    return msg.data
+    problem_solved = msg.data
+    return problem_solved
 
 def emergency_cb(msg):
     return not msg.data  # Trigger emergency stop when msg.data is True
 
 def env_detection_error_cb(msg):
-    return msg.data
+    monitor_problem = msg.data
+    if monitor_problem == True:
+        problem_solved = False
+    return monitor_problem
 
 def speech_cb(msg):
     return msg.data
@@ -659,6 +696,10 @@ def speech_cb(msg):
 def pick_done_cb(msg):
     pick_done = msg.data
     return pick_done
+
+def place_done_cb(msg):
+    place_done = msg.data
+    return place_done
 
 def gpt_response_cb(msg):
     global states_list, main_executed
@@ -697,6 +738,15 @@ def main():
     STATE_C = stateMachineGenerator(sD_C)
     STATE_D = stateMachineGenerator(sD_D)
     STATE_E = stateMachineGenerator(sD_E)
+
+    Nav = NavState()
+    LookFor = LookFor_patrol_State()
+    Pick = Look_and_Pick_State()
+    Place = PlaceState()
+    Listen = ListenState()
+    Audio = AudioState()
+
+
 
 
     with sm:
@@ -761,36 +811,36 @@ def main():
                                     default_outcome='patrol',
                                     outcome_map={
                                         'serve': {
-                                            'MONITOR_SPEECH': 'invalid',
-                                            'MONITOR_WAVE': 'invalid',
-                                            'PROBLEM_DETECTED': 'invalid',
+                                            # 'MONITOR_SPEECH': 'invalid',
+                                            # 'MONITOR_WAVE': 'invalid',
+                                            'MONITOR_PROBLEM': 'invalid',
                                             'PROBLEM_SOLVED': 'valid'
                                         },
                                         'patrol': {
-                                            'MONITOR_SPEECH': 'valid',
-                                            'MONITOR_WAVE': 'valid',
-                                            'PROBLEM_DETECTED': 'valid',
+                                            # 'MONITOR_SPEECH': 'valid',
+                                            # 'MONITOR_WAVE': 'valid',
+                                            'MONITOR_PROBLEM': 'valid',
                                             'PROBLEM_SOLVED': 'invalid'
                                         }
                                     }
                                     )
             with con:
-                smach.Concurrence.add('MONITOR_SPEECH',
-                                      smach_ros.MonitorState('/speech_recognition_topic',
-                                                             String,
-                                                             speech_cb))
-                smach.Concurrence.add('MONITOR_WAVE',
-                                      smach_ros.MonitorState('/waving_hand_topic',
-                                                             Bool,
-                                                             wave_cb))
+                # smach.Concurrence.add('MONITOR_SPEECH',
+                #                       smach_ros.MonitorState('/speech_recognition_topic',
+                #                                              String,
+                #                                              speech_cb))
+                # smach.Concurrence.add('MONITOR_WAVE',
+                #                       smach_ros.MonitorState('/waving_hand_topic',
+                #                                              Bool,
+                #                                              wave_cb))
                 smach.Concurrence.add('PROBLEM_DETECTED',
                                       smach_ros.MonitorState('/problem_detected_topic',
                                                              Bool,
                                                              problem_detected_cb))
                 smach.Concurrence.add('PROBLEM_SOLVED',
-                                      smach_ros.MonitorState('/problem_solved_topic',
+                                      smach_ros.MonitorState('/problem_solved',
                                                              Bool,
-                                                             problem_solved_cb))
+                                                             problem_solved_cb))  # place done means problem solved
             with main_sm:
                 smach.StateMachine.add('CHECK_MODE', con, transitions={'patrol': 'PATROL_INSPECTION', 'serve': 'SERVE'})
                 smach.StateMachine.add('PATROL_INSPECTION', patrol_sm, transitions={'patrol_sm_done': 'CHECK_MODE'})
@@ -817,6 +867,9 @@ if __name__ == "__main__":
     gpt_response_sub = rospy.Subscriber('/openai/response', String, gpt_response_cb)
     grasp_target_name_pub = rospy.Publisher('/grasp_target_name', String, queue_size=10)
     pick_done_sub = rospy.Subscriber('/pick_done', Bool, pick_done_cb)
+    place_pose_pub = rospy.Publisher('/place_pos',PoseStamped, queue_size=10)
+    place_done_sub = rospy.Subscriber('/place_done', Bool, place_done_cb)
+    problem_solved_sub = rospy.Subscriber('/problem_solved', Bool, problem_solved_cb)
 
 
     rospy.loginfo("Waiting for GPT response...")
