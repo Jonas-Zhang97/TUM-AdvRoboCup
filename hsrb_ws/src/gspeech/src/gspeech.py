@@ -123,7 +123,7 @@ class GSpeech(object):
           }
 
           # Send request to Google Speech-to-Text API
-          url = 'https://speech.googleapis.com/v1/speech:recognize?key=AIzaSyDeaL201f7FDIdM07YVbB3gcYY2z8ZxexQ'
+          url = 'https://speech.googleapis.com/v1/speech:recognize?key=AIzaSyALMV6-VNXPZiHLdUuuxVSa2uGGQw-6ISM'
           headers = {'Content-Type': 'application/json'}
           response = requests.post(url, headers=headers, data=json.dumps(payload))
 
@@ -158,7 +158,7 @@ def is_connected():
 def usage():
   """Print Usage"""
   print("Usage:")
-  print("rosrun gspeech gspeech.py <API_KEY>")
+  print("rosrun gspeech gspeech.py AIzaSyALMV6-VNXPZiHLdUuuxVSa2uGGQw-6ISM")
 
 
 def main():
