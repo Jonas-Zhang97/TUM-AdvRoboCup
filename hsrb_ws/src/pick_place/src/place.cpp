@@ -111,7 +111,7 @@ void Place::prePlaceApproach()
   shape_msgs::SolidPrimitive primitive;
   primitive.type = primitive.BOX;
   primitive.dimensions.resize(3);
-  primitive.dimensions[primitive.BOX_Z] = 0.26;
+  primitive.dimensions[primitive.BOX_Z] = 0.35;
   primitive.dimensions[primitive.BOX_Y] = 5;
   primitive.dimensions[primitive.BOX_X] = box_pose.position.z * 2;
 

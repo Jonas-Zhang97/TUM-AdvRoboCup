@@ -1,5 +1,6 @@
 {
   "workroom": [],
   "kitchen": ["bottle"], 
-  "storage": ["bottle"]
+  "storage": ["bottle"],
+  "goal1": ["bottle"]
 }
