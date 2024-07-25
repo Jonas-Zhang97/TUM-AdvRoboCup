@@ -56,10 +56,10 @@ class EnvDetection:
         if loc is not None and self.room_name not in loc:
           print(f'{cls} is in incorrect location: {self.room_name}, which should be in {loc[0]} \n ------')
           self.error_pub.publish(True)
-          self.string_pub.publish(loc[0])
+          self.string_pub.publish(f'{cls} is in incorrect location: {self.room_name}, which should be in {loc[0]}')
         else:
           print(f'{cls} is in correct location: {self.room_name} \n ------')
-          self.error_pub.publish(False)
+          # self.error_pub.publish(False)
     # Convert classes to locations
 
   def bbox_callback(self, yolores):
