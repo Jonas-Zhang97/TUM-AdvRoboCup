@@ -446,6 +446,7 @@ mode = 'patrol'
 monitor_problem = False
 problem_solved = True
 
+item_place = None
 """
 Command example:
 There is a person at the workroom, their request is:
@@ -540,12 +541,14 @@ class startState(smach.State):
         else:
             return 'failed'
 
-class NavState(smach.State): # TODO
-    def __init__(self, room_name):
-        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+class NavState(smach.State): # Done # for patral
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['succeeded'])
         self.room_name = ['goal1', 'kitchen', 'workroom', 'storage']
 
     def execute(self, userdata):
+
+
         if monitor_problem == False  and problem_solved == True:# further add monitor speech and monitor wave
             mode = 'patrol'
         else:
@@ -554,6 +557,7 @@ class NavState(smach.State): # TODO
         if mode == 'patrol':
             current_room_name = self.room_name[0]
             self.room_name.remove(current_room_name)
+            self.room_name.append(current_room_name)
             command = ["roslaunch", "hsrb_navigation", "send_goal.launch", f"room_name:={current_room_name}"]
             process = subprocess.call(command)
         if process == 0:
@@ -561,9 +565,23 @@ class NavState(smach.State): # TODO
         else:
             return 'failed'
 
+
+class NavState_error_handling(smach.State):  # TODO
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['succeeded'])
+        self.room_name = item_place
+
+    def execute(self, userdata):
+        command = ["roslaunch", "hsrb_navigation", "send_goal.launch", f"room_name:={self.room_name}"]
+        process = subprocess.call(command)
+        if process == 0:
+            return 'succeeded'
+        else:
+            return 'failed'
+
 class LookFor_patrol_State(smach.State): # patrol # Done
     def __init__(self):
-        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+        smach.State.__init__(self, outcomes=['succeeded'])
         self.bool = None
     def execute(self, userdata):
         env_detection_pub.publish(True)
@@ -578,13 +596,14 @@ class LookFor_patrol_State(smach.State): # patrol # Done
 
 class Look_and_Pick_State(smach.State): # find, segment, pick # Done
     def __init__(self, item_name):
-        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+        smach.State.__init__(self, outcomes=['succeeded'])
         self.item_name = item_name  # string
         global pick_done
         pick_done = None
     def execute(self, userdata):
         grasp_target_name_pub.publish(self.item_name)
         while pick_done is None:
+            rospy.loginfo("Waiting for pick node to finish")
             pass # wait the signal from pick node
         if pick_done == True:  # No problem publish true
             return 'succeeded'
@@ -593,19 +612,19 @@ class Look_and_Pick_State(smach.State): # find, segment, pick # Done
 
 class PlaceState(smach.State): # done
     def __init__(self):
-        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+        smach.State.__init__(self, outcomes=['succeeded'])
         global place_done
         place_done = None
         euler = np.array([0, 0, 30])
         quaternion = quaternion_from_euler(euler[0], euler[1], euler[2])
         self.place_pose = PoseStamped()
-        self.place_pose.pose.x = 3.9
-        self.place_pose.pose.y = 1.48
-        self.place_pose.pose.z = 0.8
-        self.place_pose.quaternion.x = quaternion[0]
-        self.place_pose.quaternion.y = quaternion[1]
-        self.place_pose.quaternion.z = quaternion[2]
-        self.place_pose.quaternion.w = quaternion[3]
+        self.place_pose.pose.position.x = 3.9
+        self.place_pose.pose.position.y = 1.48
+        self.place_pose.pose.position.z = 0.8
+        self.place_pose.pose.orientation.x = quaternion[0]
+        self.place_pose.pose.orientation.y = quaternion[1]
+        self.place_pose.pose.orientation.z = quaternion[2]
+        self.place_pose.pose.orientation.w = quaternion[3]
 
 
     def execute(self, userdata):
@@ -621,7 +640,7 @@ class PlaceState(smach.State): # done
 
 class ListenState(smach.State):  # Done
     def __init__(self):
-        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+        smach.State.__init__(self, outcomes=['succeeded'])
         self.sr_result = ''
     def execute(self, userdata):
 
@@ -633,7 +652,7 @@ class ListenState(smach.State):  # Done
 
 class AudioState(smach.State): # TODO
     def __init__(self):
-        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+        smach.State.__init__(self, outcomes=['succeeded'])
 
     def execute(self, userdata):
         command = ["rosrun", "pkg", "node.py"]
@@ -647,7 +666,7 @@ class AudioState(smach.State): # TODO
 # End state
 class endState(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+        smach.State.__init__(self, outcomes=['succeeded'])
         self.sD = stateDescription("endState", ["PreviousState"], ["None"])
 
     def execute(self, userdata):
@@ -668,38 +687,42 @@ class EmergencyStop(smach.State):
         return 'stopped'
 
 # Callback functions
-def speech_cb(userdata, msg):
-    return msg.data != ""
-
-def wave_cb(msg):
+def speech_cb(userdata,msg):
     return msg.data
 
-def problem_detected_cb(msg):
+def wave_cb(userdata, msg):
     return msg.data
 
-def problem_solved_cb(msg):
+def problem_detected_cb(userdata,msg):
+    return msg.data
+
+def problem_solved_cb(userdata,msg):
     problem_solved = msg.data
     return problem_solved
 
-def emergency_cb(msg):
+def emergency_cb(userdata,msg):
     return not msg.data  # Trigger emergency stop when msg.data is True
 
-def env_detection_error_cb(msg):
+def env_detection_error_cb(userdata, msg):
     monitor_problem = msg.data
     if monitor_problem == True:
         problem_solved = False
     return monitor_problem
 
-def speech_cb(msg):
+def speech_cb(userdata, msg):
     return msg.data
 
-def pick_done_cb(msg):
+def pick_done_cb(userdata,msg):
     pick_done = msg.data
     return pick_done
 
-def place_done_cb(msg):
+def place_done_cb(userdata,msg):
     place_done = msg.data
     return place_done
+
+def env_detection_error_string_cb(userdata,msg):
+    item_place = msg.data
+    return item_place
 
 def gpt_response_cb(msg):
     global states_list, main_executed
@@ -740,11 +763,12 @@ def main():
     STATE_E = stateMachineGenerator(sD_E)
 
     Nav = NavState()
-    LookFor = LookFor_patrol_State()
-    Pick = Look_and_Pick_State()
+    LookFor_patrol = LookFor_patrol_State()
+    Pick = Look_and_Pick_State('bottle')
     Place = PlaceState()
     Listen = ListenState()
     Audio = AudioState()
+    Nav_er = NavState_error_handling()
 
 
 
@@ -755,24 +779,27 @@ def main():
         with patrol_sm:
             regular_routine = smach.StateMachine(outcomes=['regular_routine_done'])
             with regular_routine:
-                smach.StateMachine.add('Nav1', STATE_A, transitions={'succeeded': 'LookFor'})
-                smach.StateMachine.add('LookFor', STATE_B, transitions={'succeeded': 'Pick'})
-                smach.StateMachine.add('Pick', STATE_C, transitions={'succeeded': 'Nav2'})
-                smach.StateMachine.add('Nav2', STATE_D, transitions={'succeeded': 'Place'})
-                smach.StateMachine.add('Place', STATE_E, transitions={'succeeded': 'regular_routine_done'})
-
+                smach.StateMachine.add('Nav1', Nav, transitions={'succeeded': 'LookFor_patrol1'})
+                smach.StateMachine.add('LookFor_patrol1', LookFor_patrol, transitions={'succeeded': 'Nav2'})
+                smach.StateMachine.add('Nav2', Nav, transitions={'succeeded': 'LookFor_patrol2'})
+                smach.StateMachine.add('LookFor_patrol2', LookFor_patrol, transitions={'succeeded': 'Nav3'})
+                smach.StateMachine.add('Nav3', Nav, transitions={'succeeded': 'LookFor_patrol3'})
+                smach.StateMachine.add('LookFor_patrol3', LookFor_patrol, transitions={'succeeded': 'Nav4'})
+                smach.StateMachine.add('Nav4', Nav, transitions={'succeeded': 'LookFor_patrol4'})
+                smach.StateMachine.add('LookFor_patrol4', LookFor_patrol,
+                                       transitions={'succeeded': 'regular_routine_done'})
+############################################################################################################
             problem_handling = smach.StateMachine(outcomes=['problem_handling_done'])
             with problem_handling:
-                smach.StateMachine.add('Nav3', STATE_A, transitions={'succeeded': 'Pick'})
-                smach.StateMachine.add('Pick', STATE_B, transitions={'succeeded': 'Nav4'})
-                smach.StateMachine.add('Nav4', STATE_C, transitions={'succeeded': 'Place'})
-                smach.StateMachine.add('Place', STATE_D, transitions={'succeeded': 'problem_handling_done'})
+                smach.StateMachine.add('Pick', Pick, transitions={'succeeded': 'Nav4'})
+                smach.StateMachine.add('Nav4', Nav_er, transitions={'succeeded': 'Place'})
+                smach.StateMachine.add('Place', Place, transitions={'succeeded': 'problem_handling_done'})
 
             patrol_con = smach.Concurrence(outcomes=['regular_done', 'problem_detected'],
                                            default_outcome='regular_done',
                                            outcome_map={
-                                               'problem_detected': {'MONITOR_PROBLEM': 'invalid'},
-                                               'regular_done': {'MONITOR_PROBLEM': 'valid', 'REGULAR_ROUTINE': 'regular_routine_done'}
+                                               'problem_detected': {'MONITOR_PROBLEM': 'valid'},
+                                               'regular_done': {'MONITOR_PROBLEM': 'invalid', 'REGULAR_ROUTINE': 'regular_routine_done'}
                                            })
             with patrol_con:
                 smach.Concurrence.add('REGULAR_ROUTINE', regular_routine)
@@ -784,10 +811,10 @@ def main():
         # Serve Mode
         serve_sm = smach.StateMachine(outcomes=['serve_sm_done'])
         with serve_sm:
-            smach.StateMachine.add('Nav5', STATE_A, transitions={'succeeded': 'Pick'})
-            smach.StateMachine.add('Pick', STATE_B, transitions={'succeeded': 'Nav6'})
-            smach.StateMachine.add('Nav6', STATE_C, transitions={'succeeded': 'Place'})
-            smach.StateMachine.add('Place', STATE_D, transitions={'succeeded': 'serve_sm_done'})
+            smach.StateMachine.add('Nav5', Nav, transitions={'succeeded': 'Pick'})
+            smach.StateMachine.add('Pick', Pick, transitions={'succeeded': 'Nav6'})
+            smach.StateMachine.add('Nav6', Nav, transitions={'succeeded': 'Place'})
+            smach.StateMachine.add('Place', Place, transitions={'succeeded': 'serve_sm_done'})
 
             # state_list_ordered = stateOrdering(state_list)
             # for state in state_list_ordered:
@@ -811,36 +838,36 @@ def main():
                                     default_outcome='patrol',
                                     outcome_map={
                                         'serve': {
-                                            # 'MONITOR_SPEECH': 'invalid',
-                                            # 'MONITOR_WAVE': 'invalid',
-                                            'MONITOR_PROBLEM': 'invalid',
-                                            'PROBLEM_SOLVED': 'valid'
+                                            'MONITOR_SPEECH': 'valid',
+                                            'MONITOR_WAVE': 'valid',
+                                            # 'MONITOR_PROBLEM': 'invalid',
+                                            # 'PROBLEM_SOLVED': 'valid'
                                         },
                                         'patrol': {
-                                            # 'MONITOR_SPEECH': 'valid',
-                                            # 'MONITOR_WAVE': 'valid',
-                                            'MONITOR_PROBLEM': 'valid',
-                                            'PROBLEM_SOLVED': 'invalid'
+                                            'MONITOR_SPEECH': 'invalid',
+                                            'MONITOR_WAVE': 'invalid',
+                                            # 'MONITOR_PROBLEM': 'valid',
+                                            # 'PROBLEM_SOLVED': 'invalid'
                                         }
                                     }
                                     )
             with con:
-                # smach.Concurrence.add('MONITOR_SPEECH',
-                #                       smach_ros.MonitorState('/speech_recognition_topic',
-                #                                              String,
-                #                                              speech_cb))
-                # smach.Concurrence.add('MONITOR_WAVE',
-                #                       smach_ros.MonitorState('/waving_hand_topic',
+                smach.Concurrence.add('MONITOR_SPEECH',
+                                      smach_ros.MonitorState('/speech_recognition_bool',
+                                                             Bool,
+                                                             speech_cb))
+                smach.Concurrence.add('MONITOR_WAVE',
+                                      smach_ros.MonitorState('/waving_hand_bool',
+                                                             Bool,
+                                                             wave_cb))
+                # smach.Concurrence.add('MONITOR_PROBLEM',
+                #                       smach_ros.MonitorState('/env_detection_error',
                 #                                              Bool,
-                #                                              wave_cb))
-                smach.Concurrence.add('PROBLEM_DETECTED',
-                                      smach_ros.MonitorState('/problem_detected_topic',
-                                                             Bool,
-                                                             problem_detected_cb))
-                smach.Concurrence.add('PROBLEM_SOLVED',
-                                      smach_ros.MonitorState('/problem_solved',
-                                                             Bool,
-                                                             problem_solved_cb))  # place done means problem solved
+                #                                              problem_detected_cb))
+                # smach.Concurrence.add('PROBLEM_SOLVED',
+                #                       smach_ros.MonitorState('/problem_solved',
+                #                                              Bool,
+                #                                              problem_solved_cb))  # place done means problem solved
             with main_sm:
                 smach.StateMachine.add('CHECK_MODE', con, transitions={'patrol': 'PATROL_INSPECTION', 'serve': 'SERVE'})
                 smach.StateMachine.add('PATROL_INSPECTION', patrol_sm, transitions={'patrol_sm_done': 'CHECK_MODE'})
@@ -856,13 +883,16 @@ def main():
     sis.start()
 
     outcome = sm.execute()
+    rospy.loginfo('execute')
     rospy.spin()
 
 if __name__ == "__main__":
     rospy.init_node('state_machine')
 
     env_detection_pub = rospy.Publisher('/env_detection_command', Bool, queue_size=10)
-    env_detection_error_sub = rospy.Subscriber('/env_detection_error', Bool, env_detection_error_cb)
+    # env_detection_error_sub = rospy.Subscriber('/env_detection_error', Bool, env_detection_error_cb)
+    # pub the place that the item should be placed
+    env_detection_error_string = rospy.Subscriber('/env_detection_error_string', String, env_detection_error_string_cb)
     listen_sub = rospy.Subscriber('/gspeech/speech', String, speech_cb)
     gpt_response_sub = rospy.Subscriber('/openai/response', String, gpt_response_cb)
     grasp_target_name_pub = rospy.Publisher('/grasp_target_name', String, queue_size=10)
@@ -870,6 +900,7 @@ if __name__ == "__main__":
     place_pose_pub = rospy.Publisher('/place_pos',PoseStamped, queue_size=10)
     place_done_sub = rospy.Subscriber('/place_done', Bool, place_done_cb)
     problem_solved_sub = rospy.Subscriber('/problem_solved', Bool, problem_solved_cb)
+
 
 
     rospy.loginfo("Waiting for GPT response...")
