@@ -543,27 +543,30 @@ class startState(smach.State):
 
 class NavState(smach.State): # Done # for patral
     def __init__(self):
-        smach.State.__init__(self, outcomes=['succeeded'])
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
         self.room_name = ['goal1', 'kitchen', 'workroom', 'storage']
 
     def execute(self, userdata):
+        rospy.logwarn(monitor_problem)
+        if monitor_problem == True:
 
-
-        if monitor_problem == False  and problem_solved == True:# further add monitor speech and monitor wave
-            mode = 'patrol'
-        else:
-            mode = 'serve'
-
-        if mode == 'patrol':
-            current_room_name = self.room_name[0]
-            self.room_name.remove(current_room_name)
-            self.room_name.append(current_room_name)
-            command = ["roslaunch", "hsrb_navigation", "send_goal.launch", f"room_name:={current_room_name}"]
-            process = subprocess.call(command)
-        if process == 0:
-            return 'succeeded'
-        else:
             return 'failed'
+        else:
+            if monitor_problem == False  and problem_solved == True:# further add monitor speech and monitor wave
+                mode = 'patrol'
+            else:
+                mode = 'serve'
+
+            if mode == 'patrol':
+                current_room_name = self.room_name[0]
+                self.room_name.remove(current_room_name)
+                self.room_name.append(current_room_name)
+                command = ["roslaunch", "hsrb_navigation", "send_goal.launch", f"room_name:={current_room_name}"]
+                process = subprocess.call(command)
+            if process == 0:
+                return 'succeeded'
+            else:
+                return 'failed'
 
 
 class NavState_error_handling(smach.State):  # TODO
@@ -581,9 +584,11 @@ class NavState_error_handling(smach.State):  # TODO
 
 class LookFor_patrol_State(smach.State): # patrol # Done
     def __init__(self):
-        smach.State.__init__(self, outcomes=['succeeded'])
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
         self.bool = None
     def execute(self, userdata):
+        if monitor_problem == True:
+            return 'failed'
         env_detection_pub.publish(True)
         while self.bool is None:
             self.bool = env_detection_error_cb
@@ -705,6 +710,7 @@ def emergency_cb(userdata,msg):
 
 def env_detection_error_cb(userdata, msg):
     monitor_problem = msg.data
+    rospy.logwarn(monitor_problem)
     if monitor_problem == True:
         problem_solved = False
     return monitor_problem
@@ -777,17 +783,18 @@ def main():
         # Patrol inspection mode
         patrol_sm = smach.StateMachine(outcomes=['patrol_sm_done'])
         with patrol_sm:
-            regular_routine = smach.StateMachine(outcomes=['regular_routine_done'])
+            regular_routine = smach.StateMachine(outcomes=['regular_routine_done', 'problem_detected'])
+
             with regular_routine:
-                smach.StateMachine.add('Nav1', Nav, transitions={'succeeded': 'LookFor_patrol1'})
-                smach.StateMachine.add('LookFor_patrol1', LookFor_patrol, transitions={'succeeded': 'Nav2'})
-                smach.StateMachine.add('Nav2', Nav, transitions={'succeeded': 'LookFor_patrol2'})
-                smach.StateMachine.add('LookFor_patrol2', LookFor_patrol, transitions={'succeeded': 'Nav3'})
-                smach.StateMachine.add('Nav3', Nav, transitions={'succeeded': 'LookFor_patrol3'})
-                smach.StateMachine.add('LookFor_patrol3', LookFor_patrol, transitions={'succeeded': 'Nav4'})
-                smach.StateMachine.add('Nav4', Nav, transitions={'succeeded': 'LookFor_patrol4'})
+                smach.StateMachine.add('Nav1', Nav, transitions={'succeeded': 'LookFor_patrol1', 'failed': 'problem_detected'})
+                smach.StateMachine.add('LookFor_patrol1', LookFor_patrol, transitions={'succeeded': 'Nav2', 'failed': 'problem_detected'})
+                smach.StateMachine.add('Nav2', Nav, transitions={'succeeded': 'LookFor_patrol2', 'failed': 'problem_detected'})
+                smach.StateMachine.add('LookFor_patrol2', LookFor_patrol, transitions={'succeeded': 'Nav3', 'failed': 'problem_detected'})
+                smach.StateMachine.add('Nav3', Nav, transitions={'succeeded': 'LookFor_patrol3', 'failed': 'problem_detected'})
+                smach.StateMachine.add('LookFor_patrol3', LookFor_patrol, transitions={'succeeded': 'Nav4', 'failed': 'problem_detected'})
+                smach.StateMachine.add('Nav4', Nav, transitions={'succeeded': 'LookFor_patrol4','failed': 'problem_detected'})
                 smach.StateMachine.add('LookFor_patrol4', LookFor_patrol,
-                                       transitions={'succeeded': 'regular_routine_done'})
+                                       transitions={'succeeded': 'regular_routine_done','failed': 'problem_detected'})
 ############################################################################################################
             problem_handling = smach.StateMachine(outcomes=['problem_handling_done'])
             with problem_handling:
@@ -798,7 +805,7 @@ def main():
             patrol_con = smach.Concurrence(outcomes=['regular_done', 'problem_detected'],
                                            default_outcome='regular_done',
                                            outcome_map={
-                                               'problem_detected': {'MONITOR_PROBLEM': 'valid'},
+                                               'problem_detected': {'MONITOR_PROBLEM': 'valid', 'REGULAR_ROUTINE': 'problem_detected'},
                                                'regular_done': {'MONITOR_PROBLEM': 'invalid', 'REGULAR_ROUTINE': 'regular_routine_done'}
                                            })
             with patrol_con:
@@ -811,9 +818,9 @@ def main():
         # Serve Mode
         serve_sm = smach.StateMachine(outcomes=['serve_sm_done'])
         with serve_sm:
-            smach.StateMachine.add('Nav5', Nav, transitions={'succeeded': 'Pick'})
+            smach.StateMachine.add('Nav5', Nav, transitions={'succeeded': 'Pick', 'failed': 'serve_sm_done'})
             smach.StateMachine.add('Pick', Pick, transitions={'succeeded': 'Nav6'})
-            smach.StateMachine.add('Nav6', Nav, transitions={'succeeded': 'Place'})
+            smach.StateMachine.add('Nav6', Nav, transitions={'succeeded': 'Place', 'failed': 'serve_sm_done'})
             smach.StateMachine.add('Place', Place, transitions={'succeeded': 'serve_sm_done'})
 
             # state_list_ordered = stateOrdering(state_list)
