@@ -779,6 +779,26 @@ class EmergencyStop(smach.State):
         rospy.loginfo("Emergency Stop Activated!")
         return 'stopped'
 
+# Patrol state
+class PatrolState(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+
+    def execute(self, userdata):
+        """
+        Includes all the states for patrol inspection and run in a loop
+        Example waypoints: [room1, room2, room3, room4]
+        The robot will navigate to each room and perform the inspection
+        Only contains normal routine, no problem handling
+        If a problem is detected, the robot will stop the patrol and handle the problem
+        """
+        command = ["rosrun", "pkg", "node.py"]
+        process = subprocess.call(command)
+        if process == 0:
+            return 'succeeded'
+        else:
+            return 'failed'
+
 # Callback functions
 def speech_cb(userdata,msg):
     return msg.data
