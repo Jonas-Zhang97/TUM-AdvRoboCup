@@ -482,9 +482,9 @@ LookFor_wh = stateDescription("Look For wh",
                            ["Start"],
                            ["Nav","Listen"])
 
-LookFor = stateDescription("Look For",
-                           ["Nav"],
-                           ["Pick", "Place", "Nav"])
+# LookFor = stateDescription("Look For",
+#                            ["Nav"],
+#                            ["Pick", "Place", "Nav"])
 
 Pick = stateDescription("Pick",
                         ["Look For"],
