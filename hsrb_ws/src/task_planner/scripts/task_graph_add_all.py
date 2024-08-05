@@ -48,6 +48,11 @@ def decompose_tasks(tasks, locations, objects):
 
     location_dict = {i: loc for i, loc in enumerate(locations)}
 
+    # # Add initial fixed tasks
+    # sub_tasks.append(('look_for',))
+    # sub_tasks.append(('Listen',))
+    # sub_tasks.append(('AudioOutput',))
+
     for i, (task, _) in enumerate(tasks):
         if task == 'move':
             target_location = location_dict.get(i, (None, current_location))[1]
@@ -121,21 +126,14 @@ def save_sub_tasks(sub_tasks, filename="sub_tasks.json"):
     print(f"Sub tasks saved to {filename}")
 
 # Main function to execute the task planning and visualization
-def main(instruction, is_first_time):
+def main(instruction):
     tasks, locations, objects = parse_instruction(instruction)
     sub_tasks = decompose_tasks(tasks, locations, objects)
-
-    if is_first_time:
-        initial_tasks = [('look_for',), ('Listen',), ('AudioOutput',)]
-        sub_tasks = initial_tasks + sub_tasks
-
     task_graph = build_task_graph(sub_tasks)
     visualize_task_graph(task_graph)
     save_sub_tasks(sub_tasks)
 
 # Example usage
 if __name__ == "__main__":
-    # instruction = "move to A and grab the bottle at A and move to B and move to D and move to C and release the bottle at C"
-    instruction = "grab the bottle at A and move to B and move to D and move to C and release the bottle at C"
-    is_first_time = True # False # True  # Set this to False after the first execution
-    main(instruction, is_first_time)
+    instruction = "move to A and grab the bottle at A and move to B and move to D and move to C and release the bottle at C"
+    main(instruction)

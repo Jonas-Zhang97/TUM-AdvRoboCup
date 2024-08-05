@@ -1,1 +1,1 @@
-[["move", "start", "A"], ["grab", "bottle", "A"], ["move", "A", "B"], ["move", "B", "D"], ["move", "D", "C"], ["release", "bottle", "C"]]
+[["look_for"], ["Listen"], ["AudioOutput"], ["move", "start", "A"], ["grab", "bottle", "A"], ["move", "A", "B"], ["move", "B", "D"], ["move", "D", "C"], ["release", "bottle", "C"]]
