@@ -438,7 +438,7 @@ states_list = None
 main_executed = False
 
 # pick done flag
-pick_done = None
+pick_done = False
 place_done = None
 
 # current mode:
@@ -541,6 +541,16 @@ class startState(smach.State):
         else:
             return 'failed'
 
+class StartServe(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['succeeded'])
+
+
+    def execute(self, userdata):
+        rospy.loginfo("Start Serve")
+        return 'succeeded'
+
+
 class NavState(smach.State): # Done # for patral
     def __init__(self):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
@@ -548,7 +558,7 @@ class NavState(smach.State): # Done # for patral
 
     def execute(self, userdata):
         rospy.logwarn(monitor_problem)
-        if monitor_problem == True:
+        if monitor_problem:
 
             return 'failed'
         else:
@@ -582,12 +592,31 @@ class NavState_error_handling(smach.State):  # TODO
         else:
             return 'failed'
 
+
+class NavServe(smach.State): # Done # for patral
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['succeeded'])
+        self.room_name = ['storage', 'workroom']
+
+    def execute(self, userdata):
+        rospy.logwarn(monitor_problem)
+
+        current_room_name = self.room_name[0]
+        self.room_name.remove(current_room_name)
+        self.room_name.append(current_room_name)
+        command = ["roslaunch", "hsrb_navigation", "send_goal.launch", f"room_name:={current_room_name}"]
+        process = subprocess.call(command)
+        if process == 0:
+            return 'succeeded'
+        else:
+            return 'failed'
+
 class LookFor_patrol_State(smach.State): # patrol # Done
     def __init__(self):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
         self.bool = None
     def execute(self, userdata):
-        if monitor_problem == True:
+        if monitor_problem:
             return 'failed'
         env_detection_pub.publish(True)
         while self.bool is None:
@@ -615,7 +644,50 @@ class Look_and_Pick_State(smach.State): # find, segment, pick # Done
         if pick_done == False:  # Problem detected publish false
             return 'failed'
 
+class PickServe(smach.State): # find, segment, pick # Done
+    def __init__(self, item_name):
+        smach.State.__init__(self, outcomes=['succeeded'])
+        self.item_name = item_name  # string
+        global pick_done
+        pick_done = False
+    def execute(self, userdata):
+        grasp_target_name_pub.publish(self.item_name)
+        while not pick_done :
+            rospy.loginfo("Waiting for pick node to finish")
+            pass # wait the signal from pick node
+        if pick_done == True:  # No problem publish true
+            return 'succeeded'
+        if pick_done == False:  # Problem detected publish false
+            return 'failed'
+
 class PlaceState(smach.State): # done
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['succeeded'])
+        global place_done
+        place_done = None
+        euler = np.array([0, 0, 30])
+        quaternion = quaternion_from_euler(euler[0], euler[1], euler[2])
+        self.place_pose = PoseStamped()
+        self.place_pose.pose.position.x = 3.9
+        self.place_pose.pose.position.y = 1.48
+        self.place_pose.pose.position.z = 0.8
+        self.place_pose.pose.orientation.x = quaternion[0]
+        self.place_pose.pose.orientation.y = quaternion[1]
+        self.place_pose.pose.orientation.z = quaternion[2]
+        self.place_pose.pose.orientation.w = quaternion[3]
+
+
+    def execute(self, userdata):
+        place_pose_pub.publish(self.place_pose)
+
+        while place_done is None:
+            pass # wait the signal from pick node
+        if place_done == True:  # No problem publish true
+            return 'succeeded'
+        if place_done == False:  # Problem detected publish false
+            return 'failed'
+
+class PlaceServe(smach.State): # done
     def __init__(self):
         smach.State.__init__(self, outcomes=['succeeded'])
         global place_done
@@ -682,6 +754,22 @@ class endState(smach.State):
         else:
             return 'failed'
 
+class EndServe(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['succeeded'])
+
+
+    def execute(self, userdata):
+        rospy.loginfo("End Serve")
+        return 'succeeded'
+
+class errorState(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['succeeded'])
+
+    def execute(self, userdata):
+        rospy.loginfo("Error state!")
+        return 'succeeded'
 # Emergency stop state
 class EmergencyStop(smach.State):
     def __init__(self):
@@ -731,14 +819,14 @@ def emergency_cb(userdata,msg):
 def env_detection_error_cb(userdata, msg):
     monitor_problem = msg.data
     rospy.logwarn(monitor_problem)
-    if monitor_problem == True:
+    if monitor_problem:
         problem_solved = False
     return monitor_problem
 
 def speech_cb(userdata, msg):
     return msg.data
 
-def pick_done_cb(userdata,msg):
+def pick_done_cb(msg):
     pick_done = msg.data
     return pick_done
 
@@ -789,12 +877,37 @@ def main():
     STATE_E = stateMachineGenerator(sD_E)
 
     Nav = NavState()
+    Nav_serve = NavServe()
     LookFor_patrol = LookFor_patrol_State()
     Pick = Look_and_Pick_State('bottle')
     Place = PlaceState()
     Listen = ListenState()
     Audio = AudioState()
     Nav_er = NavState_error_handling()
+    error_state = errorState()
+
+
+    # for serve mode:
+    #
+    # states = ["Start", "Pick", "Nav", "Place", "End"]
+    # classes = {
+    #     "Start": StartServe,
+    #     "Pick": PickServe,
+    #     "Nav": NavServe,
+    #     "Place": PlaceServe,
+    #     "End": EndServe
+    # }
+    #
+    # instances = {}
+    #
+    # for state in states:
+    #     class_name = f"{state}Serve"
+    #     instance_name = f"{state.lower()}_serve_instance"
+    #     instances[instance_name] = classes[state]()
+    #
+    # # Now `instances` dictionary contains all the created instances
+    # print(instances)
+
 
 
 
@@ -806,15 +919,17 @@ def main():
             regular_routine = smach.StateMachine(outcomes=['regular_routine_done', 'problem_detected'])
 
             with regular_routine:
-                smach.StateMachine.add('Nav1', Nav, transitions={'succeeded': 'LookFor_patrol1', 'failed': 'problem_detected'})
-                smach.StateMachine.add('LookFor_patrol1', LookFor_patrol, transitions={'succeeded': 'Nav2', 'failed': 'problem_detected'})
-                smach.StateMachine.add('Nav2', Nav, transitions={'succeeded': 'LookFor_patrol2', 'failed': 'problem_detected'})
-                smach.StateMachine.add('LookFor_patrol2', LookFor_patrol, transitions={'succeeded': 'Nav3', 'failed': 'problem_detected'})
-                smach.StateMachine.add('Nav3', Nav, transitions={'succeeded': 'LookFor_patrol3', 'failed': 'problem_detected'})
-                smach.StateMachine.add('LookFor_patrol3', LookFor_patrol, transitions={'succeeded': 'Nav4', 'failed': 'problem_detected'})
-                smach.StateMachine.add('Nav4', Nav, transitions={'succeeded': 'LookFor_patrol4','failed': 'problem_detected'})
+                smach.StateMachine.add('Nav1', Nav, transitions={'succeeded': 'LookFor_patrol1', 'failed': 'error_state'})
+                smach.StateMachine.add('LookFor_patrol1', LookFor_patrol, transitions={'succeeded': 'Nav2', 'failed': 'error_state'})
+                smach.StateMachine.add('Nav2', Nav, transitions={'succeeded': 'LookFor_patrol2', 'failed': 'error_state'})
+                smach.StateMachine.add('LookFor_patrol2', LookFor_patrol, transitions={'succeeded': 'Nav3', 'failed': 'error_state'})
+                smach.StateMachine.add('Nav3', Nav, transitions={'succeeded': 'LookFor_patrol3', 'failed': 'error_state'})
+                smach.StateMachine.add('LookFor_patrol3', LookFor_patrol, transitions={'succeeded': 'Nav4', 'failed': 'error_state'})
+                smach.StateMachine.add('Nav4', Nav, transitions={'succeeded': 'LookFor_patrol4','failed': 'error_state'})
                 smach.StateMachine.add('LookFor_patrol4', LookFor_patrol,
-                                       transitions={'succeeded': 'regular_routine_done','failed': 'problem_detected'})
+                                       transitions={'succeeded': 'regular_routine_done','failed': 'error_state'})
+                smach.StateMachine.add('error_state', error_state, transitions={'succeeded': 'regular_routine_done'})
+
 ############################################################################################################
             problem_handling = smach.StateMachine(outcomes=['problem_handling_done'])
             with problem_handling:
@@ -838,9 +953,9 @@ def main():
         # Serve Mode
         serve_sm = smach.StateMachine(outcomes=['serve_sm_done'])
         with serve_sm:
-            smach.StateMachine.add('Nav5', Nav, transitions={'succeeded': 'Pick', 'failed': 'serve_sm_done'})
-            smach.StateMachine.add('Pick', Pick, transitions={'succeeded': 'Nav6'})
-            smach.StateMachine.add('Nav6', Nav, transitions={'succeeded': 'Place', 'failed': 'serve_sm_done'})
+            smach.StateMachine.add('Nav_serve1', Nav_serve, transitions={'succeeded': 'Pick'})
+            smach.StateMachine.add('Pick', Pick, transitions={'succeeded': 'Nav_serve2'})
+            smach.StateMachine.add('Nav_serve2', Nav_serve, transitions={'succeeded': 'Place'})
             smach.StateMachine.add('Place', Place, transitions={'succeeded': 'serve_sm_done'})
 
             # state_list_ordered = stateOrdering(state_list)
