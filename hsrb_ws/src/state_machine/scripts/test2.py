@@ -6,6 +6,7 @@ from std_msgs.msg import Bool
 
 
 """
+Two monitor states in the concurrence container
 rostopic pub -1 /sm_reset std_msgs/Bool 'False'
 """
 class setup(smach.State):
