@@ -1,0 +1,10 @@
+<launch>
+  <!-- Including tracker.launch from ultralytics_ros package -->
+  <include file="$(find ultralytics_ros)/launch/tracker.launch">
+    <!-- Pass the input_topic argument -->
+    <arg name="input_topic" value="/hsrb/head_rgbd_sensor/rgb/image_raw" />
+    <arg name="debug" value="false"/>
+    <arg name="yolo_model" default="yolov8n-pose.pt"/>
+    <arg name="node_name" value="pose_detection"/>
+  </include>
+</launch>
