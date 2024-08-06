@@ -1,12 +1,16 @@
+#!/usr/bin/env python3
+
+import rospy
+import json
 import networkx as nx
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 import spacy
-import json
+import os
 
-# Load NLP model (example using spaCy)
+# Load NLP model
 nlp = spacy.load("en_core_web_sm")
 
-# Current location, you can set this dynamically in your application
 current_location = "my_location"
 
 # Step 1: NLP Module - Parse the natural language instruction
@@ -46,6 +50,9 @@ def parse_instruction(instruction):
 
 # Step 2: Task Decomposition and Mapping
 def decompose_tasks(tasks, locations, objects):
+    if not tasks or not locations:
+        return []
+    
     sub_tasks = []
     object_index = 0
     current_location = 'start'
@@ -72,7 +79,7 @@ def decompose_tasks(tasks, locations, objects):
             current_location = target_location
 
     # Ensure to handle only the last move without adding release if it doesn't exist
-    if tasks[-1][0] == 'move' and current_location != locations[-1][1]:
+    if tasks and tasks[-1][0] == 'move' and current_location != locations[-1][1]:
         sub_tasks.append(('move', current_location, locations[-1][1]))
     
     print(f"Decomposed sub_tasks: {sub_tasks}")  # Debugging output
@@ -109,23 +116,36 @@ def build_task_graph(sub_tasks):
     return G
 
 # Step 4: Visualize the task graph
-def visualize_task_graph(graph):
+def visualize_task_graph(graph, filename='task_graph.png'):
     pos = nx.spring_layout(graph)
-    plt.figure(figsize=(10, 7))
-    nx.draw(graph, pos, with_labels=True, node_color='lightblue', edge_color='gray', node_size=3000, font_size=10, font_weight='bold')
+    fig, ax = plt.subplots(figsize=(10, 7))
+    nx.draw(graph, pos, with_labels=True, node_color='lightblue', edge_color='gray', node_size=3000, font_size=10, font_weight='bold', ax=ax)
     edge_labels = {(edge[0], edge[1]): f'{edge[0]}->{edge[1]}' for edge in graph.edges}
-    nx.draw_networkx_edge_labels(graph, pos, edge_labels=edge_labels, font_color='red')
+    nx.draw_networkx_edge_labels(graph, pos, edge_labels=edge_labels, font_color='red', ax=ax)
     plt.title('Task Dependency Graph')
-    plt.show()
+
+    canvas = FigureCanvas(fig)
+    canvas.print_figure(filename)
+    print(f"Task graph saved to {filename}")
 
 # Step 5: Save sub_tasks to a file
-def save_sub_tasks(sub_tasks, filename="sub_tasks.json"):
+def save_sub_tasks(sub_tasks, filename):
     with open(filename, 'w') as file:
         json.dump(sub_tasks, file)
     print(f"Sub tasks saved to {filename}")
 
+    # Create a flag file to signal completion
+    with open("/tmp/task_planner_done.flag", "w") as flag_file:
+        flag_file.write("done")
+    print("Flag file created to signal completion.")
+
 # Main function to execute the task planning and visualization
-def main(instruction, is_first_time):
+def main():
+    rospy.init_node('task_planner_node', anonymous=True)
+    instruction = rospy.get_param('~instruction', "grab a bottle at storage and move to me and release the bottle")
+    is_first_time = rospy.get_param('~is_first_time', True)
+    sub_tasks_filepath = rospy.get_param('~sub_tasks_filepath', "/workspaces/cup/hsrb_ws/src/task_planner/scripts/sub_tasks.json")
+    
     tasks, locations, objects = parse_instruction(instruction)
     sub_tasks = decompose_tasks(tasks, locations, objects)
 
@@ -134,14 +154,11 @@ def main(instruction, is_first_time):
         sub_tasks = initial_tasks + sub_tasks
 
     task_graph = build_task_graph(sub_tasks)
-    visualize_task_graph(task_graph)
-    save_sub_tasks(sub_tasks)
+    save_sub_tasks(sub_tasks, sub_tasks_filepath)
+    visualize_task_graph(task_graph, filename='/workspaces/cup/hsrb_ws/src/task_planner/scripts/task_graph.png')
 
-# Example usage
+    rospy.loginfo("Task planning completed, shutting down node.")
+    rospy.signal_shutdown("Task planning completed")
+
 if __name__ == "__main__":
-    # instruction = "move to A and grab the bottle at A and move to B and move to D and move to C and release the bottle at C"
-    # instruction = "grab the bottle at A and move to B and move to D and move to C and release the bottle at C"
-    instruction = "grab a bottle at storage and move to me and release the bottle"
-
-    is_first_time = True # False # True  # Set this to False after the first execution
-    main(instruction, is_first_time)
+    main()

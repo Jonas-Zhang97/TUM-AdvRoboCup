@@ -1,0 +1,16 @@
+<launch>
+    <arg name="instruction" default="grab a bottle at storage and move to me and release the bottle"/>
+    <arg name="is_first_time" default="true"/>
+    <arg name="sub_tasks_filepath" default="$(find task_planner)/scripts/sub_tasks.json"/>
+    <arg name="actions_and_adverbials_filepath" default="$(find task_planner)/scripts/actions_and_adverbials.json"/>
+
+    <node pkg="task_planner" type="task_planner_combined.py" name="task_planner_node" output="screen">
+        <param name="instruction" value="$(arg instruction)"/>
+        <param name="is_first_time" value="$(arg is_first_time)"/>
+        <param name="sub_tasks_filepath" value="$(arg sub_tasks_filepath)"/>
+        <param name="actions_and_adverbials_filepath" value="$(arg actions_and_adverbials_filepath)"/>
+    </node>
+</launch>
+
+
+<!-- <param name="instruction" value="grab a bottle at storage and move to me and release the bottle"/> -->
