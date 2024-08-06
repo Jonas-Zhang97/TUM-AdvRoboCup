@@ -1,6 +1,32 @@
 ###Navigation
 sudo apt-get install ros-noetic-dwa-local-planner
 
+Terminal #1
+$ hsrb_mode
+$ rosnode kill /pose_integrator
+
+and open launch file
+$ roslaunch hsrb_navigation hsrb_nav_ics.launch map_file:=/workspaces/cup/hsrb_ws/src/hsrb_navigation/map/map.yaml
+
+Terminal #2
+$ hsrb_mode
+$ rviz -d $(rospack find hsrb_navigation)/rviz/mapping.rviz
+
+Terminal #3 
+$ hsrb_mode
+$ roslaunch hsrb_navigation send_goal.launch room_name:=goal1
+
+
+
+
+
+
+
+
+
+
+
+
 
 $ hsrb_mode
 $ rosnode kill /pose_integrator
@@ -11,6 +37,7 @@ rosrun rviz rviz  -d `rospack find hsrb_common_launch`/config/hsrb_display_full_
 
 $ roslaunch hsrb_navigation hsrb_nav_ics.launch map_file:=/workspaces/adv_robocup/hsrb_ws/src/hsrb_navigation/map/map.yaml
 roslaunch hsrb_navigation hsrb_nav_ics.launch map_file:=/home/athome24-3/cup/hsrb_ws/src/hsrb_navigation/map/map.yaml
+
 可以使用 tf_echo 命令直接查看机器人在 /map 坐标系下的位置和姿态
 rosrun tf tf_echo /map /base_link
 

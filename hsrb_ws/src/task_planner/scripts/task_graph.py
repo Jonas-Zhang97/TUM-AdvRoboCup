@@ -6,8 +6,12 @@ import json
 # Load NLP model (example using spaCy)
 nlp = spacy.load("en_core_web_sm")
 
+# Current location, you can set this dynamically in your application
+current_location = "my_location"
+
 # Step 1: NLP Module - Parse the natural language instruction
 def parse_instruction(instruction):
+    instruction = instruction.replace("me", current_location)  # Replace 'me' with the current location
     doc = nlp(instruction)
     tasks = []
     locations = []
@@ -136,6 +140,8 @@ def main(instruction, is_first_time):
 # Example usage
 if __name__ == "__main__":
     # instruction = "move to A and grab the bottle at A and move to B and move to D and move to C and release the bottle at C"
-    instruction = "grab the bottle at A and move to B and move to D and move to C and release the bottle at C"
+    # instruction = "grab the bottle at A and move to B and move to D and move to C and release the bottle at C"
+    instruction = "grab a bottle at storage and move to me and release the bottle"
+
     is_first_time = True # False # True  # Set this to False after the first execution
     main(instruction, is_first_time)

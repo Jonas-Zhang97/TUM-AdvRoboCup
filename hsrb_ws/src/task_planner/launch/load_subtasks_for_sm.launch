@@ -1,0 +1,9 @@
+<launch>
+    <arg name="sub_tasks_filepath" default="/workspaces/cup/hsrb_ws/src/task_planner/scripts/sub_tasks.json"/>
+    <arg name="actions_and_adverbials_filepath" default="/workspaces/cup/hsrb_ws/src/task_planner/scripts/actions_and_adverbials.json"/>
+
+    <node pkg="task_planner" type="load_subtasks_for_sm_node.py" name="load_subtasks_for_sm_node" output="screen">
+        <param name="sub_tasks_filepath" value="$(arg sub_tasks_filepath)"/>
+        <param name="actions_and_adverbials_filepath" value="$(arg actions_and_adverbials_filepath)"/>
+    </node>
+</launch>
