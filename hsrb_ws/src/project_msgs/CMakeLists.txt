@@ -16,6 +16,7 @@ add_message_files(
   FILES
   LabeledCentroid.msg
   CollisionGeometry.msg
+  KeyPoints.msg
 )
 
 ## Add action files
