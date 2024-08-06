@@ -12,6 +12,9 @@ rosrun rviz rviz  -d `rospack find hsrb_common_launch`/config/hsrb_display_full_
 $ roslaunch hsrb_navigation hsrb_nav_ics.launch map_file:=/workspaces/adv_robocup/hsrb_ws/src/hsrb_navigation/map/map.yaml
 roslaunch hsrb_navigation hsrb_nav_ics.launch map_file:=/home/athome24-3/cup/hsrb_ws/src/hsrb_navigation/map/map.yaml
 可以使用 tf_echo 命令直接查看机器人在 /map 坐标系下的位置和姿态
+rosrun tf tf_echo /map /base_link
+
+
 ##  Initialization of odometry
 roslaunch hsrb_navigation amcl.launch
 rosservice call /amcl/global_localization "{}"
@@ -72,4 +75,24 @@ roswtf
 你的问题可能是由于机器人在移动过程中没有足够的环境信息或者激光雷达数据无法有效覆盖整个地图，导致地图更新停滞
 
 
+###############################################################
+Map creation
+
+Terminal #1
+$ hsrb_mode
+$ rosnode kill /pose_integrator
+$ rviz -d $(rospack find hsrb_rosnav_config)/launch/hsrb.rviz
+
+
+Terminal #2
+$ hsrb_mode
+$ roslaunch hsrb_mapping hector.launch
+
+Terminal #3
+$ rqt
+Next, choose Robot Tools > Robot Steering from Plugins found in the rqt menubar.
+
+Terminal #4
+Saving a map
+$ rosrun map_server map_saver
 
