@@ -236,6 +236,7 @@ class chooseMode(smach.State):
         rospy.loginfo("Choose mode")
         need_help = rospy.get_param('/need_help')
         if need_help:
+            rospy.set_param('/need_help', False) # Reset the need_help flag
             return 'serve'
         else:
             return 'patrol'
@@ -279,6 +280,9 @@ def place_done_cb(userdata,msg):
 def env_detection_error_string_cb(userdata,msg):
     item_place = msg.data
     return item_place
+
+def need_help_monitor_cb(userdata, msg):
+    return msg.data
 
 def gpt_response_cb(msg):
     global states_list, main_executed
@@ -330,6 +334,9 @@ def patrol_con_child_term_cb(outcome_map):
     elif outcome_map['MONITOR_PROBLEM'] == 'invalid':
         print("patrol_con_child_term_cb: problem_detected")
         return True # preempt other states, jump out of the concurrence
+    elif outcome_map['NEED_HELP'] == 'invalid':
+        print("patrol_con_out_cb: need_help")
+        return True  # preempt other states, jump out of the concurrence
     else:
         print("patrol_con_child_term_cb: continue blocking")
         return False
@@ -358,6 +365,9 @@ def patrol_con_out_cb(outcome_map):
     print("patrol_con_out_cb")
     if outcome_map['REGULAR_ROUTINE'] == 'regular_routine_done':
         print("patrol_con_out_cb: regular_routine_done")
+        return 'regular_done'
+    elif outcome_map['NEED_HELP'] == 'invalid':
+        print("patrol_con_out_cb: need_help")
         return 'regular_done'
     elif outcome_map['MONITOR_PROBLEM'] == 'invalid':
         print("patrol_con_out_cb: problem_detected")
@@ -488,6 +498,7 @@ def main():
                 smach.Concurrence.add('REGULAR_ROUTINE', regular_routine)
                 smach.Concurrence.add('MONITOR_PROBLEM',
                                       smach_ros.MonitorState('/env_detection_error', Bool, env_detection_error_cb))
+                smach.Concurrence.add('NEED_HELP', smach_ros.MonitorState('/need_help_monitor', Bool, need_help_monitor_cb))
             # Problem handling state machine container
             problem_handling = smach.StateMachine(outcomes=['problem_handling_done'])
             with problem_handling:
@@ -568,5 +579,11 @@ if __name__ == "__main__":
     rospy.spin()
 
 """
-rostopic pub -1 /env_detection_error std_msgs/Bool 'True'
+# error detected
+rostopic pub -1 /env_detection_error std_msgs/Bool 'False' 
+
+# when the person needs help
+rosparam set /need_help 'True' && rostopic pub -1 /need_help_monitor std_msgs/Bool 'False'  
+
+
 """
