@@ -55,7 +55,7 @@ class EnvDetection:
         print("it should be in", loc)
         if loc is not None and self.room_name not in loc:
           print(f'{cls} is in incorrect location: {self.room_name}, which should be in {loc[0]} \n ------')
-          self.error_pub.publish(True)
+          self.error_pub.publish(False)
           self.string_pub.publish(f'{cls} is in incorrect location: {self.room_name}, which should be in {loc[0]}')
         else:
           print(f'{cls} is in correct location: {self.room_name} \n ------')

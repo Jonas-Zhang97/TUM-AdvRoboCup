@@ -4,5 +4,6 @@
         <!-- Pass the input_topic argument -->
         <arg name="input_topic" value="/hsrb/head_rgbd_sensor/rgb/image_raw" />
         <arg name="debug" value="false"/>
+        <arg name="iou_thres" value="0.8"/>
     </include>
 </launch>

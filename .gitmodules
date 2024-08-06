@@ -9,3 +9,10 @@
 	path = hsrb_ws/src/ultralytics_ros
 	url = git@github.com:Alpaca-zip/ultralytics_ros.git
 	branch = noetic-devel
+[submodule "hsrb_ws/src/ros_hand_gesture_recognition"]
+	path = hsrb_ws/src/ros_hand_gesture_recognition
+	url = https://github.com/TrinhNC/ros_hand_gesture_recognition.git
+[submodule "hsrb_ws/src/yolov8_ros"]
+	path = hsrb_ws/src/yolov8_ros
+	url = git@github.com:Jonas-Zhang97/yolov8_ros.git
+	branch = noetic-devel

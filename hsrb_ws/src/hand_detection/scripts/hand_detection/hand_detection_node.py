@@ -11,9 +11,9 @@ from hand_detection.yolo import YOLO
 
 class HandDetection:
     def __init__(self,
-                 input_rgb_image_topic="/xtion/rgb/image_raw",
-                 output_rgb_image_topic="/restaurant/hand_detection",
-                 detections_topic="/restaurant/hand_exist"):
+                 input_rgb_image_topic="/hsrb/head_rgbd_sensor/rgb/image_raw",
+                 output_rgb_image_topic="/hand_detection",
+                 detections_topic="/hand_exist"):
         
         self.input_rgb_image_topic = input_rgb_image_topic
         self.bridge = CvBridge()
@@ -41,8 +41,8 @@ class HandDetection:
     def listen(self):        
         rospack = rospkg.RosPack()
         package_path = rospack.get_path('hand_detection')
-        model_cfg = package_path + '/models/cross-hands.cfg'
-        model_weights = package_path + '/models/cross-hands.weights'
+        model_cfg = package_path + '/models/cross-hands-tiny.cfg'
+        model_weights = package_path + '/models/cross-hands-tiny.weights'
         print("loading yolo...")
         
         self.yolo = YOLO(model_cfg, model_weights, ["hand"])
