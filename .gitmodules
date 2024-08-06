@@ -9,6 +9,3 @@
 	path = hsrb_ws/src/ultralytics_ros
 	url = git@github.com:Alpaca-zip/ultralytics_ros.git
 	branch = noetic-devel
-[submodule "contact_graspnet_hoi"]
-	path = contact_graspnet_hoi
-	url = git@github.com:Jonas-Zhang97/contact_graspnet_hoi.git
