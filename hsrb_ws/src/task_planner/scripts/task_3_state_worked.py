@@ -117,7 +117,7 @@ def save_sub_tasks(sub_tasks, filename="sub_tasks.json"):
     print(f"Sub tasks saved to {filename}")
 
 # Example usage
-instruction = "move to A and grab the bottle at A and move to B and move to D and move to C and release the bottle at C"
+instruction = "move to A and grab the bottle at B and move to B and move to D and move to C and release the bottle at C"
 tasks, locations, objects = parse_instruction(instruction)
 sub_tasks = decompose_tasks(tasks, locations, objects)
 task_graph = build_task_graph(sub_tasks)

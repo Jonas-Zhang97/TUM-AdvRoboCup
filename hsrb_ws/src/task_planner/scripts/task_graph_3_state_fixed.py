@@ -115,7 +115,7 @@ def save_sub_tasks(sub_tasks, filename="sub_tasks.json"):
 # Example usag
 # instruction = "grab the bottle at A and move to B and move to C and release the bottle at C"
 # instruction = "move to A and grab the bottle then move to B and release the bottle"
-instruction = "grab the bottle at A and move to B and move to D then move to C and release the bottle"
+instruction = "grab the bottle at A and move to B and move to D then move to C and release the bottle at C"
 
 tasks, locations, objects = parse_instruction(instruction)
 sub_tasks = decompose_tasks(tasks, locations, objects)
