@@ -1,5 +1,6 @@
 <launch>
-  <arg name="map_file" default="$(find hsrb_mapping)/map/gmapping/map.yaml"/>
+  <!-- <arg name="map_file" default="$(find hsrb_mapping)/map/gmapping/map.yaml"/> -->
+  <arg name="map_file" default="$(find hsrb_navigation)/map/map.yaml"/>
 
   <!-- Map server -->
   <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" />
