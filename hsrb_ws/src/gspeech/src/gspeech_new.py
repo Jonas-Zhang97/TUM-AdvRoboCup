@@ -45,7 +45,7 @@ class GSpeech(object):
     def __init__(self):
         """Constructor"""
         # configure system commands
-        self.sox_cmd = "sox -r 48000 -c 1 -t alsa hw:0,6 recording.flac silence 1 0.1 1% 1 1.5 1%"
+        self.sox_cmd = "sox -r 48000 -c 1 -t alsa hw:1,0 recording.flac silence 1 0.1 1% 1 1.5 1%"
         self.sox_args = shlex.split(self.sox_cmd)
         # start ROS node
         rospy.init_node('gspeech')

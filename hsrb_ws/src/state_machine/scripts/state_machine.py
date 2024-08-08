@@ -34,7 +34,7 @@ class ServeState(smach.State):
 
 
     def task_planner(self, task):
-        if task[0]== 'look_for':
+        if task[0]== 'look_for': # TODO
             rospy.loginfo('look for state')
             rospy.sleep(3)
             return 'substate_succeeded'

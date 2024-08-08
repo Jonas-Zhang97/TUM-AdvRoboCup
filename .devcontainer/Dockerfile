@@ -173,3 +173,5 @@ RUN pip install mediapipe tensorflow opencv-python smash
 
 WORKDIR /workspaces/adv_robocup/hsrb_ws/src
 RUN rosdep install --from-paths . --ignore-src --rosdistro noetic -y
+
+RUN sudo apt install -qqy sox
