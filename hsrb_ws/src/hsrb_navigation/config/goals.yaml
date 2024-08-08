@@ -7,7 +7,7 @@ goals:
     orientation:
       roll: 0.0
       pitch: 0.0
-      yaw: -3.110
+      yaw: -1.57
   - name: "workroom"
     position:
       x: 1.929
@@ -28,13 +28,13 @@ goals:
       yaw: 3.074
   - name: "kitchen"
     position:
-      x: 1.85
-      y: -1.152
+      x: 1.70
+      y: -1.262
       z: 0.0
     orientation:
       roll: 0.0
       pitch: 0.0
-      yaw: -1.7
+      yaw: -1.599
   # - name: "desk"
   #   position:
   #     x: -4.2
