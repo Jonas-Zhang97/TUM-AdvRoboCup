@@ -44,30 +44,63 @@ There is a person at the workroom, their request is:
 
 """
 
-## FIXME may put inside the CHOOSECODE state
-task_path = rospkg.RosPack().get_path('task_planner') + '/actions_and_adverbials.json'
 
 
-def load_sub_tasks(path):
-    with open(path, 'r') as file:
-        sub_tasks = json.load(file)
-    return sub_tasks
 
-serve_tasks = load_sub_tasks(task_path)
+
 
 
 # Create Serve State
 class ServeState(smach.State):
-    def __init__(self, tasks):
+    def __init__(self):
         smach.State.__init__(self, outcomes=['succeeded', 'preempted'])
-        self.task = tasks
 
-    def task_planner(self, task_name):
-        if task_name == ''
+
+    def task_planner(self, task):
+        if task[0]== 'look_for':
+            rospy.loginfo('look for state')
+            rospy.sleep(3)
+            return 'substate_succeeded'
+            pass
+        elif task[0] == 'Listen':
+            rospy.loginfo('Listen state')
+            rospy.sleep(3)
+            return 'substate_succeeded'
+            pass
+        elif task[0] == 'AudioOutput':
+            rospy.loginfo('AudioOutput state')
+            rospy.sleep(3)
+            return 'substate_succeeded'
+            pass
+        elif task[0] == 'move':
+            rospy.loginfo('move state')
+            rospy.sleep(3)
+            return 'substate_succeeded'
+            pass
+        elif task[0] == 'grab':
+            rospy.loginfo('grab state')
+            rospy.sleep(3)
+            return 'substate_succeeded'
+            pass
+        elif task[0] == 'release':
+            rospy.loginfo('release state')
+            rospy.sleep(3)
+            return 'substate_succeeded'
+            pass
 
     def execute(self, userdata):
         rospy.loginfo("Executing Serve State")
-        rospy.loginfo("Task: %s", self.task)
+        tasks = rospy.get_param('/tasks')
+        while tasks != []:
+            if self.preempt_requested():
+                print ("state foo is being preempted!!!")
+                self.service_preempt()
+                return 'preempted'
+            result = self.task_planner(tasks.pop(0))
+            if result == 'substate_succeeded':
+                continue
+            # else:
+            #     return 'preempted'
         return 'succeeded'
 
 class NavState_patrol(smach.State): # Done # for patral
@@ -87,7 +120,7 @@ class NavState_patrol(smach.State): # Done # for patral
 
 class NavState_error_handling(smach.State):  # TODO
     def __init__(self):
-        smach.State.__init__(self, outcomes=['succeeded'])
+        smach.State.__init__(self, outcomes=['succeeded', 'preempted'])
 
 
     def execute(self, userdata):
@@ -131,7 +164,7 @@ class LookFor_patrol_State(smach.State): # patrol  # FIXME
 
 class Look_and_Pick_State(smach.State): # find, segment, pick # Done
     def __init__(self, item_name):
-        smach.State.__init__(self, outcomes=['succeeded'])
+        smach.State.__init__(self, outcomes=['succeeded', 'preempted'])
 
     def execute(self, userdata):
         for idx in range(5):
@@ -156,7 +189,7 @@ class PickServe(smach.State): # find, segment, pick # Done
 
 class PlaceState(smach.State): # done
     def __init__(self):
-        smach.State.__init__(self, outcomes=['succeeded'])
+        smach.State.__init__(self, outcomes=['succeeded', 'preempted'])
 
 
 
@@ -246,19 +279,25 @@ class errorState(smach.State):
 # Emergency stop state
 class EmergencyStop(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['stopped'])
+        smach.State.__init__(self, outcomes=['succeeded'])
 
     def execute(self, userdata):
         rospy.loginfo("Emergency Stop Activated!")
-        return 'stopped'
+        rospy.loginfo('initialization')
+
+        return 'succeeded'
 
 
 class chooseMode(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['patrol', 'serve'])
+        smach.State.__init__(self, outcomes=['patrol', 'serve', 'preempted'])
 
     def execute(self, userdata):
         rospy.loginfo("Choose mode")
+        if self.preempt_requested():
+            print("state foo is being preempted!!!")
+            self.service_preempt()
+            return 'preempted'
         need_help = rospy.get_param('/need_help')
         if need_help:
             rospy.set_param('/need_help', False) # Reset the need_help flag
@@ -307,6 +346,9 @@ def env_detection_error_string_cb(userdata,msg):
     return item_place
 
 def need_help_monitor_cb(userdata, msg):
+    return msg.data
+
+def emergency_stop_cb(userdata, msg):
     return msg.data
 
 def gpt_response_cb(msg):
@@ -363,8 +405,8 @@ def patrol_con_child_term_cb(outcome_map):
         print("patrol_con_out_cb: need_help")
         return True  # preempt other states, jump out of the concurrence
     else:
-        print("patrol_con_child_term_cb: continue blocking")
-        return False
+        print("patrol_con_child_term_cb: any other situation, also preempt")
+        return True
 
 def patrol_con_out_cb(outcome_map):
     """
@@ -398,8 +440,8 @@ def patrol_con_out_cb(outcome_map):
         print("patrol_con_out_cb: problem_detected")
         return 'problem_detected'
     else:
-        print("patrol_con_out_cb: regular_done")
-        return 'regular_done'
+        print("patrol_con_out_cb: patrol_preempted")
+        return 'patrol_con_preempted'
 
 def emergency_con_child_term_cb(outcome_map):
     """
@@ -429,12 +471,15 @@ def emergency_con_child_term_cb(outcome_map):
     if outcome_map['MAIN_SM'] == 'overall_succeeded':
         print("emergency_con_child_term_cb: overall_succeeded")
         return True  # preempt other states, jump out of the concurrence
-    elif outcome_map['EMERGENCY_STOP'] == 'valid':
+    elif outcome_map['MAIN_SM'] == 'overall_preempted':
+        print("emergency_con_child_term_cb: overall_preempted")
+        return True
+    elif outcome_map['EMERGENCY_STOP'] == 'invalid':
         print('emergency_con_child_term_cb: emergency')
         return True  # preempt other states, jump out of the concurrence
     else:
-        print("patrol_con_child_term_cb: continue blocking")
-        return False
+        print("patrol_con_child_term_cb: any other situation, also preempt")
+        return True
 
 def emergency_con_out_cb(outcome_map):
     """
@@ -461,12 +506,15 @@ def emergency_con_out_cb(outcome_map):
     if outcome_map['MAIN_SM'] == 'overall_succeeded':
         print("emergency_con_out_cb: overall_succeeded")
         return 'normal'
-    elif outcome_map['EMERGENCY_STOP'] == 'valid':
+    elif outcome_map['MAIN_SM'] == 'overall_preempted':
+        print("emergency_con_out_cb: overall_preempted")
+        return 'emergency'
+    elif outcome_map['EMERGENCY_STOP'] == 'invalid':
         print('emergency_con_out_cb: emergency')
         return 'emergency'
     else:
-        print("emergencyl_con_out_cb: regular_done")
-        return 'emergency'
+        print("emergency_con_out_cb: regular_done")
+        return 'normal'
 # Main function
 def main():
 
@@ -484,6 +532,7 @@ def main():
     Nav_er = NavState_error_handling()
     error_state = errorState()
     CHOOSEMODE = chooseMode()
+    serve_state = ServeState()
 
 
 
@@ -492,7 +541,7 @@ def main():
 
     with sm:
         # Patrol inspection mode
-        patrol_sm = smach.StateMachine(outcomes=['patrol_sm_done'])
+        patrol_sm = smach.StateMachine(outcomes=['patrol_sm_done', 'patrol_sm_preempted'])
         with patrol_sm:
 
             # Regular routine state machine container
@@ -515,7 +564,7 @@ def main():
                 smach.StateMachine.add('LookFor_patrol4', LookFor_patrol,
                                        transitions={'succeeded': 'regular_routine_done','preempted': 'problem_detected'})
 
-            patrol_con = smach.Concurrence(outcomes=['regular_done', 'problem_detected'],
+            patrol_con = smach.Concurrence(outcomes=['regular_done', 'problem_detected', 'patrol_con_preempted'],
                                            default_outcome='regular_done',
                                            child_termination_cb=patrol_con_child_term_cb,
                                            outcome_cb=patrol_con_out_cb)
@@ -525,41 +574,38 @@ def main():
                                       smach_ros.MonitorState('/env_detection_error', Bool, env_detection_error_cb))
                 smach.Concurrence.add('NEED_HELP', smach_ros.MonitorState('/need_help_monitor', Bool, need_help_monitor_cb))
             # Problem handling state machine container
-            problem_handling = smach.StateMachine(outcomes=['problem_handling_done'])
+            problem_handling = smach.StateMachine(outcomes=['problem_handling_done', 'problem_handling_preempted'])
             with problem_handling:
                 smach.StateMachine.add('Pick', Pick,
-                                       transitions={'succeeded': 'Nav4'})
+                                       transitions={'succeeded': 'Nav4', 'preempted': 'problem_handling_preempted'})
                 smach.StateMachine.add('Nav4', Nav_er,
-                                       transitions={'succeeded': 'Place'})
+                                       transitions={'succeeded': 'Place', 'preempted': 'problem_handling_preempted'})
                 smach.StateMachine.add('Place', Place,
-                                       transitions={'succeeded': 'problem_handling_done'})
+                                       transitions={'succeeded': 'problem_handling_done', 'preempted': 'problem_handling_preempted'})
 
             smach.StateMachine.add('PATROL_CON', patrol_con,
-                                   transitions={'regular_done': 'patrol_sm_done', 'problem_detected': 'PROBLEM_HANDLING'})
+                                   transitions={'regular_done': 'patrol_sm_done', 'problem_detected': 'PROBLEM_HANDLING', 'patrol_con_preempted': 'patrol_sm_preempted'})
             smach.StateMachine.add('PROBLEM_HANDLING', problem_handling,
-                                   transitions={'problem_handling_done': 'PATROL_CON'})
+                                   transitions={'problem_handling_done': 'PATROL_CON', 'problem_handling_preempted': 'patrol_sm_preempted'})
 
 
 
 
 ###
         # Serve Mode
-        serve_sm = smach.StateMachine(outcomes=['serve_sm_done'])
+        serve_sm = smach.StateMachine(outcomes=['serve_sm_done', 'serve_sm_preempted'])
         with serve_sm:
-            smach.StateMachine.add('Nav_serve1', Nav_serve, transitions={'succeeded': 'Pick'})
-            smach.StateMachine.add('Pick', Pick, transitions={'succeeded': 'Nav_serve2'})
-            smach.StateMachine.add('Nav_serve2', Nav_serve, transitions={'succeeded': 'Place'})
-            smach.StateMachine.add('Place', Place, transitions={'succeeded': 'serve_sm_done'})
+            smach.StateMachine.add('SERVE_STATE', serve_state, transitions={'succeeded': 'serve_sm_done', 'preempted': 'serve_sm_preempted'})
 
 
-        main_sm = smach.StateMachine(outcomes=['overall_succeeded', 'overall_failed'])
+        main_sm = smach.StateMachine(outcomes=['overall_succeeded', 'overall_preempted'])
 
 
 
         with main_sm:
-            smach.StateMachine.add('CHOOSE_MODE', CHOOSEMODE, transitions={'patrol': 'PATROL_INSPECTION', 'serve': 'SERVE'})
-            smach.StateMachine.add('PATROL_INSPECTION', patrol_sm, transitions={'patrol_sm_done': 'CHOOSE_MODE'})
-            smach.StateMachine.add('SERVE', serve_sm, transitions={'serve_sm_done': 'CHOOSE_MODE'})
+            smach.StateMachine.add('CHOOSE_MODE', CHOOSEMODE, transitions={'patrol': 'PATROL_INSPECTION', 'serve': 'SERVE', 'preempted': 'overall_preempted'})
+            smach.StateMachine.add('PATROL_INSPECTION', patrol_sm, transitions={'patrol_sm_done': 'CHOOSE_MODE', 'patrol_sm_preempted': 'overall_preempted'})
+            smach.StateMachine.add('SERVE', serve_sm, transitions={'serve_sm_done': 'CHOOSE_MODE', 'serve_sm_preempted': 'overall_preempted'})
 
         emergency_con = smach.Concurrence(outcomes=['emergency', 'normal'],
                                           default_outcome='normal',
@@ -568,12 +614,12 @@ def main():
 
         with emergency_con:
             smach.Concurrence.add('MAIN_SM', main_sm)
-            smach.Concurrence.add('EMERGENCY_STOP',smach_ros.MonitorState('/env_detection_error', Bool,
-                                                                          env_detection_error_cb))
+            smach.Concurrence.add('EMERGENCY_STOP',smach_ros.MonitorState('/emergency_stop', Bool,
+                                                                          emergency_stop_cb))
 
         smach.StateMachine.add('EMERGENCY_CON', emergency_con,
                                transitions={'emergency': 'RESET', 'normal': 'overall_succeeded'})
-        smach.StateMachine.add('RESET', endState(), transitions={'succeeded': 'EMERGENCY_CON'})
+        smach.StateMachine.add('RESET', EmergencyStop(), transitions={'succeeded': 'EMERGENCY_CON'})
 
     # Create and start the introspection server
     sis = smach_ros.IntrospectionServer('server_name', sm, '/SM_ROOT')
@@ -607,8 +653,13 @@ if __name__ == "__main__":
 # error detected
 rostopic pub -1 /env_detection_error std_msgs/Bool 'False' 
 
+rostopic pub -1 /emergency_stop std_msgs/Bool 'False'
+
 # when the person needs help
 rosparam set /need_help 'True' && rostopic pub -1 /need_help_monitor std_msgs/Bool 'False'  
+
+# transfer the item 
+rosparam set /tasks '[['look_for', 'None'], ['Listen', 'None'], ['AudioOutput', 'None'], ['move', 'storage'], ['grab', 'bottle'], ['move', 'my_location'], ['release', 'bottle']]'
 
 
 """

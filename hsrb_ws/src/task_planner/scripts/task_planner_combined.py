@@ -155,10 +155,12 @@ def save_actions_and_adverbials(sub_tasks, filename):
         elif action in ('grab', 'release'):
             adverbial = params[0]
         else:
-            adverbial = None
+            adverbial = 'None'
         action_adverbial_pair = [action, adverbial]
         actions_and_adverbials.append(action_adverbial_pair)
-
+        
+    rospy.set_param('/tasks', actions_and_adverbials)
+    test_tasks = rospy.get_param('/tasks')
     rospy.loginfo(f"Saving actions and adverbials to {filename}")
     with open(filename, 'w') as file:
         json.dump(actions_and_adverbials, file, indent=4)
