@@ -15,6 +15,7 @@ import rospkg
 import os
 from geometry_msgs.msg import PoseStamped
 from tf.transformations import quaternion_from_euler
+import json
 
 # # Global variables
 # states_list = None
@@ -32,6 +33,7 @@ from tf.transformations import quaternion_from_euler
 # item_place = None
 """
 project state machine dry run
+as well as integration with task planner
 """
 
 
@@ -42,13 +44,31 @@ There is a person at the workroom, their request is:
 
 """
 
-
-# State machine generator class
-
-# Start state
+## FIXME may put inside the CHOOSECODE state
+task_path = rospkg.RosPack().get_path('task_planner') + '/actions_and_adverbials.json'
 
 
+def load_sub_tasks(path):
+    with open(path, 'r') as file:
+        sub_tasks = json.load(file)
+    return sub_tasks
 
+serve_tasks = load_sub_tasks(task_path)
+
+
+# Create Serve State
+class ServeState(smach.State):
+    def __init__(self, tasks):
+        smach.State.__init__(self, outcomes=['succeeded', 'preempted'])
+        self.task = tasks
+
+    def task_planner(self, task_name):
+        if task_name == ''
+
+    def execute(self, userdata):
+        rospy.loginfo("Executing Serve State")
+        rospy.loginfo("Task: %s", self.task)
+        return 'succeeded'
 
 class NavState_patrol(smach.State): # Done # for patral
     def __init__(self):
