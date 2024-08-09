@@ -31,7 +31,7 @@ There is a person at the workroom, their request is:
 class ServeState(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['succeeded', 'preempted'])
-
+        self.first_speak = True
 
     def task_planner(self, task):
         if task[0]== 'look_for': # TODO
@@ -42,28 +42,79 @@ class ServeState(smach.State):
         elif task[0] == 'Listen':
             rospy.loginfo('Listen state')
             rospy.sleep(3)
-            return 'substate_succeeded'
-            pass
-        elif task[0] == 'AudioOutput':
+            speech_received = rospy.get_param('/gspeech/speech_received')
+            while not speech_received:
+                rospy.loginfo('Waiting for speech')
+                speech_received = rospy.get_param('/gspeech/speech_received')
+            if speech_received:
+                rospy.set_param('/gspeech/speech_received', False)
+                return 'substate_succeeded'
+
+        elif task[0] == 'AudioOutput': #TODO in subprocess call format
             rospy.loginfo('AudioOutput state')
             rospy.sleep(3)
+            command  = ["rosrun", "gtts_tts", "gtts_tts_node.py", "text:=Hello"]
+            process = subprocess.call(command)
+            rospy.sleep(3)
             return 'substate_succeeded'
             pass
+
         elif task[0] == 'move':
+            current_room_name = task[1]
             rospy.loginfo('move state')
             rospy.sleep(3)
-            return 'substate_succeeded'
-            pass
+            # TODO set the nav location dictionary which located in hsrb_navigation/config/goals.yaml
+            command = ["roslaunch", "hsrb_navigation", "send_goal.launch", f"room_name:={current_room_name}"]
+            process = subprocess.call(command)
+            if process == 0:
+                return 'substate_succeeded'
+            else:
+                return 'substate_failed'
+
+
         elif task[0] == 'grab':
             rospy.loginfo('grab state')
+            info_flag = False
             rospy.sleep(3)
-            return 'substate_succeeded'
-            pass
+            rospy.set_param('/pick_done', False)
+            pick_done_ = rospy.get_param('/pick_done')
+            item_name = task[1]
+            grasp_target_name_pub.publish(item_name)
+            while not pick_done_:
+                if not info_flag:
+                    rospy.loginfo("Waiting for pick node to finish")
+                    info_flag = True
+                pick_done_ = rospy.get_param('/pick_done')
+            if pick_done_:  # No problem publish true
+                return 'substate_succeeded'
+
+
+
         elif task[0] == 'release':
             rospy.loginfo('release state')
             rospy.sleep(3)
-            return 'substate_succeeded'
-            pass
+            info_flag = False
+            rospy.set_param('/place_done', False)
+            place_done_ = rospy.get_param('/place_done')
+            # TODO set the place location and orientation
+            euler = np.array([0, 0, 30])
+            quaternion = quaternion_from_euler(euler[0], euler[1], euler[2])
+            place_pose = PoseStamped()
+            place_pose.pose.position.x = 3.9
+            place_pose.pose.position.y = 1.48
+            place_pose.pose.position.z = 0.8
+            place_pose.pose.orientation.x = quaternion[0]
+            place_pose.pose.orientation.y = quaternion[1]
+            place_pose.pose.orientation.z = quaternion[2]
+            place_pose.pose.orientation.w = quaternion[3]
+            place_pose_pub.publish(place_pose)
+            while not place_done_:
+                if not info_flag:
+                    rospy.loginfo("Waiting for place node to finish")
+                    info_flag = True
+                place_done_ = rospy.get_param('/place_done')
+            if place_done_:  # No problem publish true
+                return 'substate_succeeded'
 
     def execute(self, userdata):
         rospy.loginfo("Executing Serve State")
@@ -118,23 +169,6 @@ class NavState_error_handling(smach.State):  # TODO
             return 'failed'
 
 
-class NavServe(smach.State): # Done
-    def __init__(self):
-        smach.State.__init__(self, outcomes=['succeeded'])
-        self.room_name = ['storage', 'workroom']
-
-    def execute(self, userdata):
-        rospy.logwarn(monitor_problem)
-
-        current_room_name = self.room_name[0]
-        self.room_name.remove(current_room_name)
-        self.room_name.append(current_room_name)
-        command = ["roslaunch", "hsrb_navigation", "send_goal.launch", f"room_name:={current_room_name}"]
-        process = subprocess.call(command)
-        if process == 0:
-            return 'succeeded'
-        else:
-            return 'failed'
 
 class LookFor_patrol_State(smach.State): # patrol  # FIXME
     def __init__(self):
@@ -161,7 +195,6 @@ class Look_and_Pick_State(smach.State): # find, segment, pick # Done
     def __init__(self, item_name):
         smach.State.__init__(self, outcomes=['succeeded'])
         self.item_name = item_name  # string
-        global pick_done
         pick_done = None
     def execute(self, userdata):
         grasp_target_name_pub.publish(self.item_name)
@@ -177,7 +210,6 @@ class PickServe(smach.State): # find, segment, pick # Done
     def __init__(self, item_name):
         smach.State.__init__(self, outcomes=['succeeded'])
         self.item_name = item_name  # string
-        global pick_done
         pick_done = False
     def execute(self, userdata):
         grasp_target_name_pub.publish(self.item_name)
@@ -374,9 +406,7 @@ def env_detection_error_cb(userdata, msg):
     return monitor_problem
 
 
-def pick_done_cb(msg):
-    pick_done = msg.data
-    return pick_done
+
 
 def place_done_cb(userdata,msg):
     place_done = msg.data
@@ -679,10 +709,9 @@ if __name__ == "__main__":
     listen_sub = rospy.Subscriber('/gspeech/speech', String, speech_cb)
     gpt_response_sub = rospy.Subscriber('/openai/response', String, gpt_response_cb)
     grasp_target_name_pub = rospy.Publisher('/grasp_target_name', String, queue_size=10)
-    pick_done_sub = rospy.Subscriber('/pick_done', Bool, pick_done_cb)
     place_pose_pub = rospy.Publisher('/place_pos',PoseStamped, queue_size=10)
-    place_done_sub = rospy.Subscriber('/place_done', Bool, place_done_cb)
-    problem_solved_sub = rospy.Subscriber('/problem_solved', Bool, problem_solved_cb)
+
+    # problem_solved_sub = rospy.Subscriber('/problem_solved', Bool, problem_solved_cb)  ?
 
 
 

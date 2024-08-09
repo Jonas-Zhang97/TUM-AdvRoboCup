@@ -10,7 +10,7 @@ bool Pick::init()
   pick_target_sub_ = nh_.subscribe(pick_target_topic_, 1, &Pick::poseCallback, this);
 
   gripper_pub_ = nh_.advertise<tmc_control_msgs::GripperApplyEffortActionGoal>("/hsrb/gripper_controller/apply_force/goal", 10);
-  pick_done_pub_ = nh_.advertise<std_msgs::Bool>(pick_done_topic_, 1);
+
 
   // Initialize flags
   command_ = false;
@@ -50,8 +50,8 @@ void Pick::update()
     // Perform pick
     pick();
 
-    // Publish msgs that are needed
-    pick_done_pub_.publish(pick_done_);
+    // Set pick done flag that is needed
+    nh_.setParam("/pick_done", true);
 
     // Clear all collision objects in the planning scene
     object_names_ = PSI_.getKnownObjectNames();

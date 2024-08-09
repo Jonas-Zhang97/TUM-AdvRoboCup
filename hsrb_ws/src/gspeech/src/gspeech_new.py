@@ -136,7 +136,7 @@ class GSpeech(object):
                     rospy.loginfo("confidence: {}".format(confidence))
                     self.pub_speech.publish(String(alternative['transcript']))
                     print(format(alternative['transcript']))
-
+                    rospy.set_param('~speech_received', True)
                     # Integrate with task planner and state machine
                     if format(alternative['transcript']) == 'come here':
                         self.pub_need_help_monitor.publish(False)  # Set the need help monitor to invalid.

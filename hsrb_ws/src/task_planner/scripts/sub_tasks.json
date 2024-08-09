@@ -1,1 +1,1 @@
-[["look_for"], ["Listen"], ["AudioOutput"], ["move", "start", "storage"], ["grab", "bottle", "storage"], ["move", "storage", "my_location"], ["release", "bottle", "my_location"]]
+[["look_for"], ["AudioOutput"], ["Listen"], ["AudioOutput"]]
