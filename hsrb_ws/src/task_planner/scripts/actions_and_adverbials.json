@@ -1,0 +1,30 @@
+[
+    [
+        "look_for",
+        "None"
+    ],
+    [
+        "Listen",
+        "None"
+    ],
+    [
+        "AudioOutput",
+        "None"
+    ],
+    [
+        "move",
+        "storage"
+    ],
+    [
+        "grab",
+        "bottle"
+    ],
+    [
+        "move",
+        "my_location"
+    ],
+    [
+        "release",
+        "bottle"
+    ]
+]

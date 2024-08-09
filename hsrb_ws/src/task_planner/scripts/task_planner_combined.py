@@ -186,7 +186,8 @@ def main():
 
     task_graph = build_task_graph(sub_tasks)
     save_sub_tasks(sub_tasks, sub_tasks_filepath)
-    visualize_task_graph(task_graph, filename=os.path.join(pkg_path, 'scripts/task_graph.png'))
+    # uncomment for visualization of task graph
+    # visualize_task_graph(task_graph, filename=os.path.join(pkg_path, 'scripts/task_graph.png'))
 
     rospy.loginfo("Task planning completed, proceeding to load sub tasks.")
     

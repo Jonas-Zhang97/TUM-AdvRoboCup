@@ -34,10 +34,12 @@ import roslib; roslib.load_manifest('gspeech')
 import rospy
 from std_msgs.msg import String
 from std_msgs.msg import Int8
+from std_msgs.msg import Bool
 import shlex,subprocess,os,io
 from std_srvs.srv import *
 import requests
 import base64
+
 
 class GSpeech(object):
     """Speech Recogniser using Google Speech API"""
@@ -53,6 +55,7 @@ class GSpeech(object):
         rospy.on_shutdown(self.shutdown)
         self.pub_speech = rospy.Publisher('~speech', String, queue_size=10)
         self.pub_confidence = rospy.Publisher('~confidence', Int8, queue_size=10)
+        self.pub_need_help_monitor = rospy.Publisher('/need_help_monitor', Bool, queue_size=10)
         self.srv_start = rospy.Service('~start', Empty, self.start)
         self.srv_stop = rospy.Service('~stop', Empty, self.stop)
         # run speech recognition
@@ -132,6 +135,16 @@ class GSpeech(object):
                     self.pub_confidence.publish(confidence)
                     rospy.loginfo("confidence: {}".format(confidence))
                     self.pub_speech.publish(String(alternative['transcript']))
+                    print(format(alternative['transcript']))
+
+                    # Integrate with task planner and state machine
+                    if format(alternative['transcript']) == 'come here':
+                        self.pub_need_help_monitor.publish(False)  # Set the need help monitor to invalid.
+                        rospy.set_param('/need_help', True)  # Set the need help flag to True for CHOOSE_MODE.
+                    else:
+                        command = ['roslaunch', 'task_planner', 'task_planner.launch', f'instruction:={format(alternative["transcript"])}']
+                        subprocess.call(command)
+
                     rospy.loginfo("transcript: {}".format(alternative['transcript']))
 
 def is_connected():
