@@ -76,7 +76,7 @@ class ServeState(smach.State):
             rospy.loginfo('grab state')
             info_flag = False
             rospy.sleep(3)
-            rospy.set_param('/pick_done', False)
+            rospy.set_param('/pick_done', False) # init the pick done flag
             pick_done_ = rospy.get_param('/pick_done')
             item_name = task[1]
             grasp_target_name_pub.publish(item_name)
@@ -121,7 +121,7 @@ class ServeState(smach.State):
         tasks = rospy.get_param('/tasks')
         while tasks != []:
             if self.preempt_requested():
-                print ("state foo is being preempted!!!")
+                print ("state serve is being preempted!!!")
                 self.service_preempt()
                 return 'preempted'
             result = self.task_planner(tasks.pop(0))
@@ -139,7 +139,6 @@ class NavState_patrol(smach.State): # Done # for patral
         self.room_name = ['goal1', 'kitchen', 'workroom', 'storage']
 
     def execute(self, userdata):
-        rospy.logwarn(monitor_problem)
         if self.preempt_requested():
             print("state Nav is being preempted!!!")
             self.service_preempt()
@@ -157,11 +156,16 @@ class NavState_patrol(smach.State): # Done # for patral
 
 class NavState_error_handling(smach.State):  # TODO
     def __init__(self):
-        smach.State.__init__(self, outcomes=['succeeded'])
-        self.room_name = item_place
+        smach.State.__init__(self, outcomes=['succeeded', 'preempted'])
+
 
     def execute(self, userdata):
-        command = ["roslaunch", "hsrb_navigation", "send_goal.launch", f"room_name:={self.room_name}"]
+        if self.preempt_requested():
+            print("state Nav_er is being preempted!!!")
+            self.service_preempt()
+            return 'preempted'
+        item_place = rospy.get_param('/env_detection/should_place')  # FIXME set the rosparam in the env_detection node
+        command = ["roslaunch", "hsrb_navigation", "send_goal.launch", f"room_name:={item_place}"]
         process = subprocess.call(command)
         if process == 0:
             return 'succeeded'
@@ -170,7 +174,7 @@ class NavState_error_handling(smach.State):  # TODO
 
 
 
-class LookFor_patrol_State(smach.State): # patrol  # FIXME
+class LookFor_State_patrol(smach.State): # patrol  # FIXME
     def __init__(self):
         smach.State.__init__(self, outcomes=['succeeded', 'preempted'])
         self.bool = None
@@ -179,49 +183,50 @@ class LookFor_patrol_State(smach.State): # patrol  # FIXME
             print("state LookFor is being preempted!!!")
             self.service_preempt()
             return 'preempted'
-        if monitor_problem: # FIXME
-            return 'failed'
-        env_detection_pub.publish(True)
-        while self.bool is None:
-            self.bool = env_detection_error_cb
-        if self.bool:  # No problem publish true
+        info_flag = False
+        rospy.set_param('/env_detection/detection_done', False)  # init the error flag
+        env_detection_pub.publish(True)  # start the env detection
+        if_detection_done = rospy.get_param('/env_detection/detection_done')
+        while not if_detection_done:
+            if not info_flag:
+                rospy.loginfo("Waiting for env detection")
+                info_flag = True
+            if_detection_done = rospy.get_param('/env_detection/detection_done')
+
+        if if_detection_done:
             return 'succeeded'
-        else:  # Problem detected publish false
-            return 'failed'
 
 
 
-class Look_and_Pick_State(smach.State): # find, segment, pick # Done
-    def __init__(self, item_name):
-        smach.State.__init__(self, outcomes=['succeeded'])
-        self.item_name = item_name  # string
-        pick_done = None
+
+class Look_and_Pick_State_patrol(smach.State): # find, segment, pick # Done
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['succeeded', 'preempted'])
+
     def execute(self, userdata):
-        grasp_target_name_pub.publish(self.item_name)
-        while pick_done is None:
-            rospy.loginfo("Waiting for pick node to finish")
-            pass # wait the signal from pick node
-        if pick_done == True:  # No problem publish true
-            return 'succeeded'
-        if pick_done == False:  # Problem detected publish false
-            return 'failed'
+        if self.preempt_requested():
+            print("state Pick is being preempted!!!")
+            self.service_preempt()
+            return 'preempted'
 
-class PickServe(smach.State): # find, segment, pick # Done
-    def __init__(self, item_name):
-        smach.State.__init__(self, outcomes=['succeeded'])
-        self.item_name = item_name  # string
-        pick_done = False
-    def execute(self, userdata):
-        grasp_target_name_pub.publish(self.item_name)
-        while not pick_done :
-            rospy.loginfo("Waiting for pick node to finish")
-            pass # wait the signal from pick node
-        if pick_done == True:  # No problem publish true
-            return 'succeeded'
-        if pick_done == False:  # Problem detected publish false
-            return 'failed'
+        item_name = rospy.get_param('/env_detection/error_obj')
 
-class PlaceState(smach.State): # done
+        rospy.loginfo('Pick_patrol')
+        info_flag = False
+        rospy.sleep(3)
+        rospy.set_param('/pick_done', False)  # init the pick done flag
+        pick_done_ = rospy.get_param('/pick_done')
+        grasp_target_name_pub.publish(item_name)
+        while not pick_done_:
+            if not info_flag:
+                rospy.loginfo("Waiting for pick node to finish")
+                info_flag = True
+            pick_done_ = rospy.get_param('/pick_done')
+        if pick_done_:  # No problem publish true
+            return 'succeeded'
+
+
+class PlaceState_patrol(smach.State): # done
     def __init__(self):
         smach.State.__init__(self, outcomes=['succeeded'])
         global place_done
@@ -247,82 +252,6 @@ class PlaceState(smach.State): # done
             return 'succeeded'
         if place_done == False:  # Problem detected publish false
             return 'failed'
-
-class PlaceServe(smach.State): # done
-    def __init__(self):
-        smach.State.__init__(self, outcomes=['succeeded'])
-        global place_done
-        place_done = None
-        euler = np.array([0, 0, 30])
-        quaternion = quaternion_from_euler(euler[0], euler[1], euler[2])
-        self.place_pose = PoseStamped()
-        self.place_pose.pose.position.x = 3.9
-        self.place_pose.pose.position.y = 1.48
-        self.place_pose.pose.position.z = 0.8
-        self.place_pose.pose.orientation.x = quaternion[0]
-        self.place_pose.pose.orientation.y = quaternion[1]
-        self.place_pose.pose.orientation.z = quaternion[2]
-        self.place_pose.pose.orientation.w = quaternion[3]
-
-
-    def execute(self, userdata):
-        place_pose_pub.publish(self.place_pose)
-
-        while place_done is None:
-            pass # wait the signal from pick node
-        if place_done == True:  # No problem publish true
-            return 'succeeded'
-        if place_done == False:  # Problem detected publish false
-            return 'failed'
-
-
-class ListenState(smach.State):  # Done
-    def __init__(self):
-        smach.State.__init__(self, outcomes=['succeeded'])
-        self.sr_result = ''
-    def execute(self, userdata):
-
-        self.sr_result = speech_cb
-        if self.sr_result != '':
-            return 'succeeded'
-        else:
-            return 'failed'
-
-class AudioState(smach.State): # TODO
-    def __init__(self):
-        smach.State.__init__(self, outcomes=['succeeded'])
-
-    def execute(self, userdata):
-        command = ["rosrun", "pkg", "node.py"]
-        process = subprocess.call(command)
-        if process == 0:
-            return 'succeeded'
-        else:
-            return 'failed'
-
-
-# End state
-class endState(smach.State):
-    def __init__(self):
-        smach.State.__init__(self, outcomes=['succeeded'])
-        self.sD = stateDescription("endState", ["PreviousState"], ["None"])
-
-    def execute(self, userdata):
-        command = ["rosrun", "pkg", "node.py"]
-        process = subprocess.call(command)
-        if process == 0:
-            return 'succeeded'
-        else:
-            return 'failed'
-
-class EndServe(smach.State):
-    def __init__(self):
-        smach.State.__init__(self, outcomes=['succeeded'])
-
-
-    def execute(self, userdata):
-        rospy.loginfo("End Serve")
-        return 'succeeded'
 
 class errorState(smach.State):
     def __init__(self):
@@ -339,26 +268,6 @@ class EmergencyStop(smach.State):
     def execute(self, userdata):
         rospy.loginfo("Emergency Stop Activated!")
         return 'stopped'
-
-# Patrol state
-class PatrolState(smach.State):
-    def __init__(self):
-        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
-
-    def execute(self, userdata):
-        """
-        Includes all the states for patrol inspection and run in a loop
-        Example waypoints: [room1, room2, room3, room4]
-        The robot will navigate to each room and perform the inspection
-        Only contains normal routine, no problem handling
-        If a problem is detected, the robot will stop the patrol and handle the problem
-        """
-        command = ["rosrun", "pkg", "node.py"]
-        process = subprocess.call(command)
-        if process == 0:
-            return 'succeeded'
-        else:
-            return 'failed'
 
 
 class chooseMode(smach.State):
@@ -399,11 +308,7 @@ def emergency_cb(userdata,msg):
     return not msg.data  # Trigger emergency stop when msg.data is True
 
 def env_detection_error_cb(userdata, msg):
-    monitor_problem = msg.data
-    rospy.logwarn(monitor_problem)
-    if monitor_problem:
-        problem_solved = False
-    return monitor_problem
+    return msg.data
 
 
 
@@ -412,12 +317,21 @@ def place_done_cb(userdata,msg):
     place_done = msg.data
     return place_done
 
-def env_detection_error_string_cb(userdata,msg):
-    item_place = msg.data
-    return item_place
+
+def env_detection_error_string_cb(msg):  # FIXME msg is string? name?
+    result = msg.data
+    rospy.loginfo('AudioOutput')
+    rospy.sleep(3)
+    command = ["rosrun", "gtts_tts", "gtts_tts_node.py", f"text:={result}"]
+    process = subprocess.call(command)
+    rospy.sleep(3)
+    # FIXME for tts
+    return result
+
 
 def need_help_monitor_cb(userdata, msg):
     return msg.data
+
 
 def emergency_stop_cb(userdata, msg):
     return msg.data
@@ -592,14 +506,15 @@ def main():
 
 
     Nav = NavState_patrol()
-    Nav_serve = NavServe()
-    LookFor_patrol = LookFor_patrol_State()
-    Pick = Look_and_Pick_State('bottle')
-    Place = PlaceState()
-    Listen = ListenState()
-    Audio = AudioState()
+
+    LookFor_patrol = LookFor_State_patrol()
+    Pick = Look_and_Pick_State_patrol()
+    Place = PlaceState_patrol()
+
     Nav_er = NavState_error_handling()
     error_state = errorState()
+    CHOOSEMODE = chooseMode()
+    serve_state = ServeState()
 
     # Create the top-level state machine
     sm = smach.StateMachine(outcomes=['overall_succeeded', 'overall_failed', 'emergency_stopped'])
@@ -702,7 +617,7 @@ def main():
 if __name__ == "__main__":
     rospy.init_node('state_machine')
     rospy.set_param('/need_help', False)
-    env_detection_pub = rospy.Publisher('/env_detection_command', Bool, queue_size=10)
+    env_detection_pub = rospy.Publisher('/env_detection_command', Bool, queue_size=10) # start the detection
     # env_detection_error_sub = rospy.Subscriber('/env_detection_error', Bool, env_detection_error_cb)
     # pub the place that the item should be placed
     env_detection_error_string = rospy.Subscriber('/env_detection_error_string', String, env_detection_error_string_cb)

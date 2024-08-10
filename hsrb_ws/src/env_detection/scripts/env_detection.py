@@ -56,9 +56,13 @@ class EnvDetection:
         if loc is not None and self.room_name not in loc:
           print(f'{cls} is in incorrect location: {self.room_name}, which should be in {loc[0]} \n ------')
           self.error_pub.publish(False)
+          rospy.set_param('/env_detection/detection_done', True)
           self.string_pub.publish(f'{cls} is in incorrect location: {self.room_name}, which should be in {loc[0]}')
+          rospy.set_param('~should_place', loc[0])
+          rospy.set_param('~error_obj', cls)
         else:
           print(f'{cls} is in correct location: {self.room_name} \n ------')
+          rospy.set_param('env_detection_error', True)
           # self.error_pub.publish(False)
     # Convert classes to locations
 
