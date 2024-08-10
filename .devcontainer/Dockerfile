@@ -169,7 +169,7 @@ RUN pip install ftfy regex tqdm
 RUN pip install git+https://github.com/openai/CLIP.git
 
 # RUN pip install -r /workspaces/adv_robocup/hsrb_ws/src/ultralytics_ros/requirements.txt
-RUN pip install mediapipe opencv-python smash
+RUN pip install opencv-python smash
 
 WORKDIR /workspaces/adv_robocup/hsrb_ws/src
 RUN rosdep install --from-paths . --ignore-src --rosdistro noetic -y
