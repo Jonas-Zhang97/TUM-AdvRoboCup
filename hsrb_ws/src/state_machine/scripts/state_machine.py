@@ -53,7 +53,7 @@ class ServeState(smach.State):
         elif task[0] == 'AudioOutput': #TODO in subprocess call format
             rospy.loginfo('AudioOutput state')
             rospy.sleep(3)
-            command  = ["rosrun", "gtts_tts", "gtts_tts_node.py", "text:=Hello"]
+            command  = ["rosrun", "gtts_tts", "gtts_tts_node.py", "_text:=Hello"]
             process = subprocess.call(command)
             rospy.sleep(3)
             return 'substate_succeeded'
@@ -164,7 +164,7 @@ class NavState_error_handling(smach.State):  # TODO
             print("state Nav_er is being preempted!!!")
             self.service_preempt()
             return 'preempted'
-        item_place = rospy.get_param('/env_detection/should_place')  # FIXME set the rosparam in the env_detection node
+        item_place = rospy.get_param('/env_detection/should_place')  # get the place that the item should be placed
         command = ["roslaunch", "hsrb_navigation", "send_goal.launch", f"room_name:={item_place}"]
         process = subprocess.call(command)
         if process == 0:
@@ -174,7 +174,7 @@ class NavState_error_handling(smach.State):  # TODO
 
 
 
-class LookFor_State_patrol(smach.State): # patrol  # FIXME
+class LookFor_State_patrol(smach.State): # patrol
     def __init__(self):
         smach.State.__init__(self, outcomes=['succeeded', 'preempted'])
         self.bool = None
