@@ -1,0 +1,10 @@
+<launch>
+
+    <arg name="sentence" default="Hello, Operator!"/>
+    <arg name="language" default="en"/>
+
+    <node pkg="gtts_tts" type="gtts_tts_launch.py" name="gtts_tts_launch" output="screen">
+        <param name="sentence" value="$(arg sentence)"/>
+        <param name="language" value="$(arg language)"/>
+    </node>
+</launch>

@@ -1,0 +1,13 @@
+# Request
+string sentence
+bool interrupting
+bool queueing
+int32 language
+
+---
+# Result
+bool success
+
+---
+# Feedback
+string current_step
