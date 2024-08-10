@@ -180,3 +180,8 @@ RUN sudo apt install -qqy sox\
 
 RUN pip install gtts spacy
 RUN python3 -m spacy download en_core_web_sm
+RUN sudo apt-get install -qqy \
+ros-noetic-dwa-local-planner \
+ros-noetic-slam-gmapping \
+ros-noetic-slam-karto\
+ros-noetic-vision-msgs
