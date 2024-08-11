@@ -19,12 +19,13 @@ then, run the depth image segmentation:
 
 ```bash
 rosrun depth_segmentation depth_seg.py
+rosrun depth_segmentation centroid_calculator.py
 ```
 
 after which, run patrol mode:
 
 ```bash
-rosrun env_detection env_detection.launch
+rosrun env_detection env_detection.py
 ```
 
 finally, run pick and place:

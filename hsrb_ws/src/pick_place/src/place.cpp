@@ -81,6 +81,8 @@ void Place::computeTargetOrientation()
   vec.z = target_position_.z - current_base_position.z;
 
   target_orientation_ = atan2(vec.y, vec.x);
+
+  ROS_INFO_STREAM("Target orientation: " << target_orientation_);
 }
 
 void Place::prePlaceApproach()
@@ -96,6 +98,8 @@ void Place::prePlaceApproach()
   quaternion.setRPY(-1.57, -1.57, target_orientation_ - 1.57);
   pre_approach_pose.pose.orientation = tf2::toMsg(quaternion);
 
+  ROS_INFO_STREAM("Pre-place pose: \n" << pre_approach_pose);
+
   std::vector<moveit_msgs::CollisionObject> collision_object;
   collision_object.resize(1);
   collision_object[0].header.frame_id = ref_frame_;
@@ -104,11 +108,17 @@ void Place::prePlaceApproach()
   geometry_msgs::Pose box_pose;
   box_pose.orientation = pre_approach_pose.pose.orientation;
   box_pose.position = target_position_;
-  box_pose.position.z -= 0.1;
+  // Ensure z position is non-negative
+  if (box_pose.position.z > 0.1) {
+      box_pose.position.z -= 0.1;
+  } else {
+      box_pose.position.z = 0; // Set to zero if subtracting 0.1 would make it negative
+  }
   box_pose.position.z /= 2;
   box_pose.position.x = target_position_.x;
   box_pose.position.y = target_position_.y;
 
+  ROS_INFO_STREAM("Box pose: \n" << box_pose);
   shape_msgs::SolidPrimitive primitive;
   primitive.type = primitive.BOX;
   primitive.dimensions.resize(3);
@@ -149,6 +159,7 @@ void Place::toPlacePose()
   std::vector<geometry_msgs::Pose> waypoints;
   waypoints.push_back(place_pose);
 
+  ROS_INFO_STREAM("Place pose: \n" << place_pose);
   moveit_msgs::RobotTrajectory trajectory;
 
   double eef_step = 0.01;  // Resolution of the Cartesian path
@@ -244,6 +255,8 @@ void Place::poseCallback(const geometry_msgs::PoseStamped::ConstPtr &msg)
 
     // Log the received command and position
     ROS_INFO_STREAM("Command received, position: " << target_position_);
+
+    command_ = true;
   }
   catch (tf2::TransformException &ex)
   {

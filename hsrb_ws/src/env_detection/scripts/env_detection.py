@@ -62,7 +62,7 @@ class EnvDetection:
           rospy.set_param('~error_obj', cls)
         else:
           print(f'{cls} is in correct location: {self.room_name} \n ------')
-          rospy.set_param('env_detection_error', True)
+          rospy.set_param('/env_detection/detection_done', True)
           # self.error_pub.publish(False)
     # Convert classes to locations
 
