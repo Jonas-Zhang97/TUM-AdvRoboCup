@@ -143,7 +143,7 @@ class ServeState(smach.State):
 class NavState_patrol(smach.State): # Done # for patral
     def __init__(self):
         smach.State.__init__(self, outcomes=['succeeded', 'preempted'])
-        self.room_name = ['goal1', 'kitchen', 'workroom', 'storage']
+        self.room_name = ['kitchen', 'workroom', 'storage']
 
     def execute(self, userdata):
         if self.preempt_requested():
@@ -199,6 +199,11 @@ class LookFor_State_patrol(smach.State): # patrol
                 rospy.loginfo("Waiting for env detection")
                 info_flag = True
             if_detection_done = rospy.get_param('/env_detection/detection_done')
+        rospy.sleep(3)
+        if self.preempt_requested():
+            print("state LookFor is being preempted!!!")
+            self.service_preempt()
+            return 'preempted'
 
         if if_detection_done:
             return 'succeeded'
@@ -235,30 +240,37 @@ class Look_and_Pick_State_patrol(smach.State): # find, segment, pick # Done
 
 class PlaceState_patrol(smach.State): # done
     def __init__(self):
-        smach.State.__init__(self, outcomes=['succeeded'])
-        global place_done
-        place_done = None
-        euler = np.array([0, 0, 30])
-        quaternion = quaternion_from_euler(euler[0], euler[1], euler[2])
-        self.place_pose = PoseStamped()
-        self.place_pose.pose.position.x = 3.9
-        self.place_pose.pose.position.y = 1.48
-        self.place_pose.pose.position.z = 0.8
-        self.place_pose.pose.orientation.x = quaternion[0]
-        self.place_pose.pose.orientation.y = quaternion[1]
-        self.place_pose.pose.orientation.z = quaternion[2]
-        self.place_pose.pose.orientation.w = quaternion[3]
+        smach.State.__init__(self, outcomes=['succeeded', 'preempted'])
+
 
 
     def execute(self, userdata):
-        place_pose_pub.publish(self.place_pose)
-
-        while place_done is None:
-            pass # wait the signal from pick node
-        if place_done == True:  # No problem publish true
+        if self.preempt_requested():
+            print("state Pick is being preempted!!!")
+            self.service_preempt()
+            return 'preempted'
+        info_flag = False
+        rospy.set_param('/place_done', False)
+        place_done_ = rospy.get_param('/place_done')
+        # TODO set the place location and orientation
+        euler = np.array([0, 0, 30])
+        quaternion = quaternion_from_euler(euler[0], euler[1], euler[2])
+        place_pose = PoseStamped()
+        place_pose.pose.position.x = 3.9
+        place_pose.pose.position.y = 1.48
+        place_pose.pose.position.z = 0.8
+        place_pose.pose.orientation.x = quaternion[0]
+        place_pose.pose.orientation.y = quaternion[1]
+        place_pose.pose.orientation.z = quaternion[2]
+        place_pose.pose.orientation.w = quaternion[3]
+        place_pose_pub.publish(place_pose)
+        while not place_done_:
+            if not info_flag:
+                rospy.loginfo("Waiting for place node to finish")
+                info_flag = True
+            place_done_ = rospy.get_param('/place_done')
+        if place_done_:  # No problem publish true
             return 'succeeded'
-        if place_done == False:  # Problem detected publish false
-            return 'failed'
 
 class errorState(smach.State):
     def __init__(self):
@@ -270,11 +282,13 @@ class errorState(smach.State):
 # Emergency stop state
 class EmergencyStop(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['stopped'])
+        smach.State.__init__(self, outcomes=['succeeded'])
 
     def execute(self, userdata):
         rospy.loginfo("Emergency Stop Activated!")
-        return 'stopped'
+        rospy.loginfo('initialization')
+
+        return 'succeeded'
 
 
 class chooseMode(smach.State):
@@ -631,7 +645,7 @@ if __name__ == "__main__":
     listen_sub = rospy.Subscriber('/gspeech/speech', String, speech_cb)
     gpt_response_sub = rospy.Subscriber('/openai/response', String, gpt_response_cb)
     grasp_target_name_pub = rospy.Publisher('/grasp_target_name', String, queue_size=10)
-    place_pose_pub = rospy.Publisher('/place_pos',PoseStamped, queue_size=10)
+    place_pose_pub = rospy.Publisher('/place_pose',PoseStamped, queue_size=10)
 
     # problem_solved_sub = rospy.Subscriber('/problem_solved', Bool, problem_solved_cb)  ?
 
