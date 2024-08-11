@@ -66,6 +66,8 @@ class ServeState(smach.State):
 
         elif task[0] == 'move':
             current_room_name = task[1]
+            if current_room_name == 'my_location':
+                current_room_name = 'goal1'
             rospy.loginfo('move state')
             rospy.sleep(3)
             # TODO set the nav location dictionary which located in hsrb_navigation/config/goals.yaml

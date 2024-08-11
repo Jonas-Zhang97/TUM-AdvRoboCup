@@ -178,7 +178,7 @@ RUN rosdep install --from-paths . --ignore-src --rosdistro noetic -y
 RUN sudo apt install -qqy sox\
     ros-noetic-tmc-msgs
 
-RUN pip install gtts spacy
+RUN pip install gtts spacy ultralytics rosnumpy
 RUN python3 -m spacy download en_core_web_sm
 RUN sudo apt-get install -qqy \
     ros-noetic-dwa-local-planner \
