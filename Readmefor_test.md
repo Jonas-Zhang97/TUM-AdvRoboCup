@@ -53,3 +53,11 @@ export XDG_RUNTIME_DIR=/tmp/runtime-$USER
 mkdir -p $XDG_RUNTIME_DIR
 chmod 0700 $XDG_RUNTIME_DIR
 
+## tts
+pip install gtts
+sudo apt-get install ros-noetic-tmc-msgs
+
+sudo apt-get install mpg321
+
+rosrun gtts_tts gtts_tts_rosrun.py _sentence:="This is a test sentence" _language:="en"
+
