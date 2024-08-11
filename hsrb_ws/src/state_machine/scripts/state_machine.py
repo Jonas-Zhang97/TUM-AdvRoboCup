@@ -36,9 +36,14 @@ class ServeState(smach.State):
     def task_planner(self, task):
         if task[0]== 'look_for': # TODO
             rospy.loginfo('look for state')
-            rospy.sleep(3)
-            return 'substate_succeeded'
-            pass
+            command = ["roslaunch", "hsrb_navigation", "send_goal.launch", "room_name:=goal1"]
+            process = subprocess.call(command)
+            if process == 0:
+                return 'substate_succeeded'
+            else:
+                return 'substate_failed'
+
+
         elif task[0] == 'Listen':
             rospy.loginfo('Listen state')
             rospy.sleep(3)
@@ -53,7 +58,7 @@ class ServeState(smach.State):
         elif task[0] == 'AudioOutput': #TODO in subprocess call format
             rospy.loginfo('AudioOutput state')
             rospy.sleep(3)
-            command  = ["rosrun", "gtts_tts", "gtts_tts_node.py", "_text:=Hello"]
+            command  = ["rosrun", "gtts_tts", "gtts_tts_rosrun.py", "_sentence:='This is a test sentence'", "_language:='en'"]
             process = subprocess.call(command)
             rospy.sleep(3)
             return 'substate_succeeded'

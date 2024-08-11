@@ -14,5 +14,21 @@
     [
         "AudioOutput",
         "None"
+    ],
+    [
+        "move",
+        "storage"
+    ],
+    [
+        "grab",
+        "bottle"
+    ],
+    [
+        "move",
+        "my_location"
+    ],
+    [
+        "release",
+        "bottle"
     ]
 ]

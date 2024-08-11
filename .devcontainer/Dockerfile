@@ -184,4 +184,8 @@ RUN sudo apt-get install -qqy \
     ros-noetic-dwa-local-planner \
     ros-noetic-slam-gmapping \
     ros-noetic-slam-karto\
-    ros-noetic-vision-msgs
+    ros-noetic-vision-msgs\
+    ros-noetic-gmapping\
+    ros-noetic-graph-msgs\
+    ros-noetic-rosparam-shortcuts\
+    mpg321
