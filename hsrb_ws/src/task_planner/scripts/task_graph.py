@@ -141,7 +141,7 @@ def main(instruction, is_first_time):
 if __name__ == "__main__":
     # instruction = "move to A and grab the bottle at A and move to B and move to D and move to C and release the bottle at C"
     # instruction = "grab the bottle at A and move to B and move to D and move to C and release the bottle at C"
-    instruction = "grab a bottle at storage and move to me and release the bottle"
+    instruction = "grab a bottle at kitchen and move to work room and release the bottle"
 
     is_first_time = True # False # True  # Set this to False after the first execution
     main(instruction, is_first_time)

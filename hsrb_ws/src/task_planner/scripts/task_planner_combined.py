@@ -181,7 +181,7 @@ def main():
     sub_tasks = decompose_tasks(tasks, locations, objects)
 
     if is_first_time:
-        initial_tasks = [('look_for',), ('AudioOutput',), ('Listen',), ('AudioOutput',)]
+        initial_tasks = [('look_for',), ('AudioOutput','What can I do for you'), ('Listen',), ('AudioOutput', 'Sure')]
         sub_tasks = initial_tasks + sub_tasks
 
     task_graph = build_task_graph(sub_tasks)
@@ -204,3 +204,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

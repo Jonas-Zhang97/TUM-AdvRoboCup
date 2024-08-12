@@ -32,6 +32,7 @@ class ServeState(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['succeeded', 'preempted'])
         self.first_speak = True
+        self.counter = 0
 
     def task_planner(self, task):
         if task[0]== 'look_for': # TODO
@@ -58,9 +59,15 @@ class ServeState(smach.State):
         elif task[0] == 'AudioOutput': #TODO in subprocess call format
             rospy.loginfo('AudioOutput state')
             rospy.sleep(3)
-            command  = ["rosrun", "gtts_tts", "gtts_tts_rosrun.py", "_sentence:='This is a test sentence'", "_language:='en'"]
+            text1 = "What can I do for you?"
+            text2 = "Sure, I will do that for you"
+            if self.counter == 0:
+                command  = ["rosrun", "gtts_tts", "gtts_tts_rosrun.py", f"_sentence:={text1}", "_language:='en'"]
+            else:
+                command  = ["rosrun", "gtts_tts", "gtts_tts_rosrun.py", f"_sentence:={text2}", "_language:='en'"]
             process = subprocess.call(command)
             rospy.sleep(3)
+            self.counter += 1
             return 'substate_succeeded'
             pass
 
@@ -107,9 +114,10 @@ class ServeState(smach.State):
             euler = np.array([0, 0, 30])
             quaternion = quaternion_from_euler(euler[0], euler[1], euler[2])
             place_pose = PoseStamped()
-            place_pose.pose.position.x = 3.9
-            place_pose.pose.position.y = 1.48
-            place_pose.pose.position.z = 0.8
+            # 1.93, 0.715, 0.5
+            place_pose.pose.position.x = 1.69
+            place_pose.pose.position.y = -1.9
+            place_pose.pose.position.z = 0.5
             place_pose.pose.orientation.x = quaternion[0]
             place_pose.pose.orientation.y = quaternion[1]
             place_pose.pose.orientation.z = quaternion[2]
@@ -199,6 +207,8 @@ class LookFor_State_patrol(smach.State): # patrol
                 rospy.loginfo("Waiting for env detection")
                 info_flag = True
             if_detection_done = rospy.get_param('/env_detection/detection_done')
+        detection_info = rospy.get_param('/env_detection/detection_string')
+        subprocess.call(["rosrun", "gtts_tts", "gtts_tts_rosrun.py", f"_sentence:='{detection_info}'", "_language:='en'"])
         rospy.sleep(3)
         if self.preempt_requested():
             print("state LookFor is being preempted!!!")
@@ -256,9 +266,9 @@ class PlaceState_patrol(smach.State): # done
         euler = np.array([0, 0, 30])
         quaternion = quaternion_from_euler(euler[0], euler[1], euler[2])
         place_pose = PoseStamped()
-        place_pose.pose.position.x = 3.9
-        place_pose.pose.position.y = 1.48
-        place_pose.pose.position.z = 0.8
+        place_pose.pose.position.x = 1.69
+        place_pose.pose.position.y = -1.9
+        place_pose.pose.position.z = 0.5
         place_pose.pose.orientation.x = quaternion[0]
         place_pose.pose.orientation.y = quaternion[1]
         place_pose.pose.orientation.z = quaternion[2]
@@ -312,7 +322,7 @@ class chooseMode(smach.State):
 #######################################################################################################################
 # Callback functions
 #######################################################################################################################
-def speech_cb(userdata,msg):
+def speech_cb(msg):
     return msg.data
 
 def wave_cb(userdata, msg):
@@ -341,9 +351,15 @@ def place_done_cb(userdata,msg):
 
 def env_detection_error_string_cb(msg):  # FIXME msg is string? name?
     result = msg.data
+    speak_error(result)
+    # FIXME for tts
+    return result
+
+def speak_error(result):
     rospy.loginfo('AudioOutput')
     rospy.sleep(3)
-    command = ["rosrun", "gtts_tts", "gtts_tts_node.py", f"text:={result}"]
+    rospy.logwarn('speak', result)
+    command = ["rosrun", "gtts_tts", "gtts_tts_rosrun.py", f"_sentence:='{result}'", "_language:='en'"]
     process = subprocess.call(command)
     rospy.sleep(3)
     # FIXME for tts
@@ -657,6 +673,10 @@ if __name__ == "__main__":
 
 
 """
+
+ grab a bottle at storage and move to kitchen and release the bottle
+
+
 # error detected
 rostopic pub -1 /env_detection_error std_msgs/Bool 'False' 
 

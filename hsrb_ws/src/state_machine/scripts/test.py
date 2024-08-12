@@ -134,22 +134,26 @@ if __name__=="__main__":
     
     # main()
     rospy.init_node("test")
-    from tf.transformations import quaternion_from_euler
-    from geometry_msgs.msg import PoseStamped
-    import numpy as np
-    place_pose_pub = rospy.Publisher('/place_pose',PoseStamped, queue_size=10)
-    euler = np.array([0, 0, 30])
-    quaternion = quaternion_from_euler(euler[0], euler[1], euler[2])
-    place_pose = PoseStamped()
-    place_pose.pose.position.x = 3.9
-    place_pose.pose.position.y = 1.48
-    place_pose.pose.position.z = 0.8
-    place_pose.pose.orientation.x = quaternion[0]
-    place_pose.pose.orientation.y = quaternion[1]
-    place_pose.pose.orientation.z = quaternion[2]
-    place_pose.pose.orientation.w = quaternion[3]
-    place_pose_pub.publish(place_pose)
-    print(place_pose)
+    # from tf.transformations import quaternion_from_euler
+    # from geometry_msgs.msg import PoseStamped
+    # import numpy as np
+    # place_pose_pub = rospy.Publisher('/place_pose',PoseStamped, queue_size=10)
+    # euler = np.array([0, 0, 30])
+    # quaternion = quaternion_from_euler(euler[0], euler[1], euler[2])
+    # place_pose = PoseStamped()
+    # place_pose.pose.position.x = 3.9
+    # place_pose.pose.position.y = 1.48
+    # place_pose.pose.position.z = 0.8
+    # place_pose.pose.orientation.x = quaternion[0]
+    # place_pose.pose.orientation.y = quaternion[1]
+    # place_pose.pose.orientation.z = quaternion[2]
+    # place_pose.pose.orientation.w = quaternion[3]
+    # place_pose_pub.publish(place_pose)
+    # print(place_pose)
+    import subprocess
+    result = "hello world"
+    command = ["rosrun", "gtts_tts", "gtts_tts_rosrun.py", f"_sentence:='{result}'", "_language:='en'"]
+    process = subprocess.call(command)
     print("published")
 
     # shut down the node
