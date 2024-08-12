@@ -35,7 +35,7 @@ class EnvDetection:
     self.room_sub = rospy.Subscriber('/room_identifier', RoomIdentifier, self.room_callback)
     self.command_sub = rospy.Subscriber('/env_detection_command', Bool, self.command_callback)
     self.string_pub = rospy.Publisher('/env_detection_error_str', String, queue_size=1)
-    self.error_pub = rospy.Publisher('/env_detection_error', Bool, queue_size=1)
+    # self.error_pub = rospy.Publisher('/env_detection_error', Bool, queue_size=1)
 
   def update(self):
     if self.has_boxes and self.has_room_name and self.has_command:
@@ -55,7 +55,7 @@ class EnvDetection:
         print("it should be in", loc)
         if loc is not None and self.room_name not in loc:
           print(f'{cls} is in incorrect location: {self.room_name}, which should be in {loc[0]} \n ------')
-          self.error_pub.publish(False)
+          # self.error_pub.publish(False)
           rospy.set_param('/env_detection/detection_done', True)
           self.string_pub.publish(f'{cls} is in incorrect location: {self.room_name}, which should be in {loc[0]}')
           rospy.set_param('~should_place', loc[0])
@@ -63,6 +63,7 @@ class EnvDetection:
         else:
           print(f'{cls} is in correct location: {self.room_name} \n ------')
           rospy.set_param('/env_detection/detection_done', True)
+          self.string_pub.publish('all correct')
           # self.error_pub.publish(False)
     # Convert classes to locations
 
