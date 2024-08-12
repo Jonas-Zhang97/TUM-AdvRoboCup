@@ -73,6 +73,7 @@ void Place::place()
 
 void Place::computeTargetOrientation()
 {
+  ROS_INFO_STREAM("Target position in computeTO: " << target_position_.x << " " << target_position_.y << " " << target_position_.z);
   geometry_msgs::Point current_base_position;
   current_base_position = whole_body_grp.getCurrentPose("base_link").pose.position;
   geometry_msgs::Vector3 vec;
@@ -87,9 +88,11 @@ void Place::computeTargetOrientation()
 
 void Place::prePlaceApproach()
 {
+  ROS_INFO_STREAM("target position in pre-place approach: " << target_position_.x << " " << target_position_.y << " " << target_position_.z);
   geometry_msgs::PoseStamped pre_approach_pose;
   pre_approach_pose.header.frame_id = ref_frame_;
   pre_approach_pose.pose.position = target_position_;
+  ROS_INFO_STREAM("pre_approach_pose position before: " << pre_approach_pose.pose.position.x << " " << pre_approach_pose.pose.position.y << " " << pre_approach_pose.pose.position.z);
   pre_approach_pose.pose.position.x -= 0.18 * cos(target_orientation_);
   pre_approach_pose.pose.position.y -= 0.18 * sin(target_orientation_);
   pre_approach_pose.pose.position.z += 0.1;
@@ -122,7 +125,7 @@ void Place::prePlaceApproach()
   shape_msgs::SolidPrimitive primitive;
   primitive.type = primitive.BOX;
   primitive.dimensions.resize(3);
-  primitive.dimensions[primitive.BOX_Z] = 0.35;
+  primitive.dimensions[primitive.BOX_Z] = 0.26;
   primitive.dimensions[primitive.BOX_Y] = 5;
   primitive.dimensions[primitive.BOX_X] = box_pose.position.z * 2;
 
@@ -251,7 +254,7 @@ void Place::poseCallback(const geometry_msgs::PoseStamped::ConstPtr &msg)
     tf2::doTransform(place_pose, place_pose, map_to_odom);
 
     // Set the target position to the transformed pose's position
-    geometry_msgs::Point target_position_ = place_pose.pose.position;
+    target_position_ = place_pose.pose.position;
 
     // Log the received command and position
     ROS_INFO_STREAM("Command received, position: " << target_position_);
