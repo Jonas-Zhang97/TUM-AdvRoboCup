@@ -90,7 +90,7 @@ void Pick::computeTargetOrientation()
 
 void Pick::moveHead()
 {
-  std::vector<double> head_ready_value = {0.0, -0.125};
+  std::vector<double> head_ready_value = {0.0, -0.69};
   head_grp.setJointValueTarget(head_ready_value);
   head_grp.move();
 }
