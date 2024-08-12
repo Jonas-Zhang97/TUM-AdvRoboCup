@@ -35,7 +35,7 @@ class EnvDetection:
     self.room_sub = rospy.Subscriber('/room_identifier', RoomIdentifier, self.room_callback)
     self.command_sub = rospy.Subscriber('/env_detection_command', Bool, self.command_callback)
     self.string_pub = rospy.Publisher('/env_detection_error_str', String, queue_size=1)
-    # self.error_pub = rospy.Publisher('/env_detection_error', Bool, queue_size=1)
+    self.error_pub = rospy.Publisher('/env_detection_error', Bool, queue_size=1)
 
   def update(self):
     if self.has_boxes and self.has_room_name and self.has_command:
