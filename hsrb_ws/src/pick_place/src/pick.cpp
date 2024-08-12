@@ -106,7 +106,7 @@ void Pick::prePickApproach()
   pre_approach_pose.header.frame_id = ref_frame_;
   pre_approach_pose.pose.position.x = target_position_.x - 0.18 * cos(target_orientation_);
   pre_approach_pose.pose.position.y = target_position_.y - 0.18 * sin(target_orientation_);
-  pre_approach_pose.pose.position.z = target_position_.z;
+  pre_approach_pose.pose.position.z = target_position_.z+0.06;
 
   tf2::Quaternion quaternion;
   quaternion.setRPY(-1.57, -1.57, target_orientation_ - 1.57);

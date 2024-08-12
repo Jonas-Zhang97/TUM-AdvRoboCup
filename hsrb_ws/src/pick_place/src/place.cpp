@@ -95,7 +95,7 @@ void Place::prePlaceApproach()
   ROS_INFO_STREAM("pre_approach_pose position before: " << pre_approach_pose.pose.position.x << " " << pre_approach_pose.pose.position.y << " " << pre_approach_pose.pose.position.z);
   pre_approach_pose.pose.position.x -= 0.18 * cos(target_orientation_);
   pre_approach_pose.pose.position.y -= 0.18 * sin(target_orientation_);
-  pre_approach_pose.pose.position.z += 0.1;
+  pre_approach_pose.pose.position.z += 0.15;
 
   tf2::Quaternion quaternion;
   quaternion.setRPY(-1.57, -1.57, target_orientation_ - 1.57);

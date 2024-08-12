@@ -62,12 +62,13 @@ class EnvDetection:
           rospy.set_param('/env_detection/detection_string', string_info) 
           rospy.set_param('~should_place', loc[0])
           rospy.set_param('~error_obj', cls)
-      else:
-        print(f'{cls} is in correct location: {self.room_name} \n ------')
-        rospy.set_param('/env_detection/detection_done', True)
-        string_info = 'everything is in good manner'
-        rospy.set_param('/env_detection/detection_string', string_info) 
-        self.string_pub.publish('all correct')
+      # else:
+      #   print(f'{cls} is in correct location: {self.room_name} \n ------')
+        
+      #   self.string_pub.publish('all correct')
+    rospy.set_param('/env_detection/detection_done', True)
+    string_info = 'everything is in good manner'
+    rospy.set_param('/env_detection/detection_string', string_info) 
         # self.error_pub.publish(False)
     # Convert classes to locations
 
