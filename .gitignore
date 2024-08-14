@@ -18,6 +18,7 @@ hsrb_ws/src/moveit_utils
 ref/
 # hand detection model
 hsrb_ws/src/hand_detection/models/cross*
+tree.txt
 
 # Just in case
 hsrb_ws/src/hsrb_*_devel
