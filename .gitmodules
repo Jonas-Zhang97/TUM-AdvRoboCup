@@ -9,3 +9,6 @@
 	path = hsrb_ws/src/yolov8_ros
 	url = git@github.com:Jonas-Zhang97/yolov8_ros.git
 	branch = noetic-devel
+[submodule "hsrb_ws/src/sam_ros"]
+	path = hsrb_ws/src/sam_ros
+	url = git@github.com:vvyric/sam_ros.git
