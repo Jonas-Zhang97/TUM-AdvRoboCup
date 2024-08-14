@@ -207,6 +207,6 @@ include_directories(
 catkin_install_python(PROGRAMS scripts/state_machine.py
 DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
-catkin_install_python(PROGRAMS scripts/test.py
+catkin_install_python(PROGRAMS scripts/state_machine_dry_run.py
 DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
