@@ -7,6 +7,29 @@ This documentation will cover the following packages
 - depth_segmentation_alternative: sam_ros, generate target object point cloud;
 - gspeech: speech recognition
 - state machine
+- gpt
+
+## State machine
+
+Ensure the following packages are executed:
+
+- object_detections
+- depth_segmentation
+- env_detection
+- pick_place
+- hsrb_navigation
+
+```
+rosrun state_machine state_machine.py
+```
+
+For dry run( can be executed separately):
+
+```
+rosrun state_machine state_machine_dry_run.py
+```
+
+
 
 ## sam_ros:
 
@@ -44,3 +67,15 @@ self.sox_cmd = "sox -r 48000 -c 1 -t alsa hw:4,0 recording.flac silence 1 0.1 1%
 
 
 The package include two python scripts. gspeech.py is suitable for python 2 and old version of google cloud , while the gspeech_new.py for python 3 and new google cloud api.
+
+
+
+## GPT
+
+```sh
+rosrun wpr_chatgpt gui_chatgpt.py
+rosrun wpr_chatgpt openai_ros.py
+```
+
+
+
