@@ -139,7 +139,7 @@ RUN sudo sh -c '/bin/echo -e "Package: ros-noetic-laser-ortho-projector\nPin: ve
 RUN sudo apt-get update
 RUN sudo apt-get install ros-noetic-tmc-desktop-full -q -y --no-install-recommends
 
-RUN echo -e "\nexport LOCALHOST_IP=\$(hostname -I | awk '{print \$1}')\necho \"Localhost IP: \$LOCALHOST_IP\"\n\nexport ROS_IP=\$LOCALHOST_IP\nexport ROS_MASTER_URI=http://\$LOCALHOST_IP:11311" >> ~/.bashrc
+RUN echo -e "\nexport LOCALHOST_IP=\$(hostname -I | awk '{print \$1}')\necho \"Localhost IP: \$LOCALHOST_IP\"\n\nexport ROS_IP=\$LOCALHOST_IP" >> ~/.bashrc
 
 
 RUN echo 'export ROS_HOME=~/.ros' >> ~/.bashrc
