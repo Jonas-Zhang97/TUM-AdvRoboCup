@@ -4,7 +4,7 @@ import os
 from openai import OpenAI
 key = "EnterYourOwnKey"
 
-client = OpenAI(api_key="key")   
+client = OpenAI(api_key=key)   
 import rospy
 from std_msgs.msg import String
 import chat_config
