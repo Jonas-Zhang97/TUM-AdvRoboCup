@@ -2,8 +2,9 @@
 # coding=utf-8
 import os
 from openai import OpenAI
+key = "EnterYourOwnKey"
 
-client = OpenAI(api_key="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")   
+client = OpenAI(api_key="key")   
 import rospy
 from std_msgs.msg import String
 import chat_config
