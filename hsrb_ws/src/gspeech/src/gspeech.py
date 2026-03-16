@@ -158,7 +158,7 @@ def is_connected():
 def usage():
   """Print Usage"""
   print("Usage:")
-  print("rosrun gspeech gspeech.py AIzaSyALMV6-VNXPZiHLdUuuxVSa2uGGQw-6ISM")
+  print("rosrun gspeech gspeech.py APIKEY")
 
 
 def main():
